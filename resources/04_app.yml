@@ -74,4 +74,4 @@ resources:
           # emitir una credencial del endpoint, que es justo lo que el SP no puede.
           # Ver docs/LAKEBASE.md.
           - name: LAKEBASE_INSTANCE_NAME
-            value: ""
+            value: ${var.lakebase_instance}

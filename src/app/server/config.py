@@ -19,7 +19,7 @@ SCHEMA = os.environ.get("SCHEMA", "ditcher_neira")
 # catálogo o el esquema a mano: así el repo corre en cualquier workspace
 # cambiando solo las variables del bundle.
 FQ = f"{CATALOG}.{SCHEMA}"
-WAREHOUSE_ID = os.environ.get("WAREHOUSE_ID", "")
+WAREHOUSE_ID = (os.environ.get("WAREHOUSE_ID") or "").strip()
 
 # Nombre del fabricante que contrata el estudio. Todas las métricas de
 # "nuestro" desempeño (disponibilidad, share of shelf, precio) se filtran por
@@ -28,8 +28,11 @@ CLIENTE = os.environ.get("CLIENTE", "Nestlé")
 
 # Lakebase — disabled by default (empty host → is_configured() returns False).
 # The app shows a friendly "no configurado" message instead of querying Postgres.
-LAKEBASE_HOST = os.environ.get("LAKEBASE_HOST") or os.environ.get("PGHOST", "")
-LAKEBASE_DB = os.environ.get("LAKEBASE_DB") or os.environ.get("PGDATABASE", "dncentro")
+# El .strip() no es cosmético: las variables opcionales del bundle llegan como un
+# espacio, porque la API de Apps rechaza una variable de entorno sin valor. Sin
+# strip, " " es truthy y el app intenta conectarse a un host en blanco.
+LAKEBASE_HOST = (os.environ.get("LAKEBASE_HOST") or os.environ.get("PGHOST") or "").strip()
+LAKEBASE_DB = (os.environ.get("LAKEBASE_DB") or os.environ.get("PGDATABASE") or "").strip() or "dncentro"
 LAKEBASE_PORT = int(os.environ.get("LAKEBASE_PORT") or os.environ.get("PGPORT") or 5432)
 LAKEBASE_INSTANCE_NAME = (os.environ.get("LAKEBASE_INSTANCE_NAME") or "").strip()
 

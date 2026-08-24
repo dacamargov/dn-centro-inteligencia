@@ -66,26 +66,34 @@ variables:
   dashboard_id:
     description: >-
       Dashboard AI/BI que embebe el app. Lo llena `instalar.sh` después de
-      crearlo. Vacío = la pestaña del dashboard queda oculta.
-    default: ""
+      crearlo. Sin valor = la pestaña del dashboard queda oculta.
+    # Un espacio, no vacío: ver la nota sobre variables opcionales más abajo.
+    default: " "
 
   genie_space_id:
     description: >-
-      Sala de Genie real. Vacío = el app usa el modo demostración con preguntas y
-      respuestas precargadas. Ver docs/GENIE.md.
-    default: ""
+      Sala de Genie real. Sin valor = el app usa el modo demostración con
+      preguntas y respuestas precargadas. Ver docs/GENIE.md.
+    default: " "
+
+  # Las variables opcionales llevan un espacio como default, no una cadena
+  # vacía. La API de Databricks Apps rechaza una variable de entorno sin `value`,
+  # y el CLI omite el campo cuando la cadena está vacía; el app, por su lado,
+  # hace .strip() y trata el espacio como ausente. Sin esto el deploy del app
+  # falla con "Must specify environment variable source".
 
   # --- Lakebase (copiloto de campo) ------------------------------------------
   # Apagado por defecto porque una instancia de Postgres cuesta aunque nadie la
   # consulte. Ver docs/LAKEBASE.md para encenderlo.
   lakebase_host:
-    description: Host del endpoint de Lakebase. Vacío = pestaña de campo deshabilitada.
-    default: ""
+    description: >-
+      Host del endpoint de Lakebase. Sin valor = pestaña de campo deshabilitada.
+    default: " "
   lakebase_instance:
     description: >-
       Nombre corto de la instancia, para adjuntarla al app como recurso. Con esto
       definido, Databricks le crea al service principal su rol de Postgres.
-    default: ""
+    default: " "
   lakebase_db:
     description: Base de datos dentro de la instancia.
     default: dncentro

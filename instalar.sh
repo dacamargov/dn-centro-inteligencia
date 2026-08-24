@@ -314,23 +314,38 @@ print(json.dumps({"access_control_list": [{
     done
 fi
 
-# El app queda detenido al crearse. Se arranca y se espera, porque el primer
-# arranque instala dependencias y tarda.
-ESTADO="$(db apps get "$EFF_APP" -o json 2>/dev/null | python3 -c '
-import json,sys
-try: print((json.load(sys.stdin).get("compute_status") or {}).get("state") or "")
-except Exception: print("")
-' || true)"
-if [ "$ESTADO" != "ACTIVE" ]; then
-    echo "  arrancando el app (el primer arranque instala dependencias)..."
-    db apps start "$EFF_APP" >/dev/null 2>&1 || true
+# `bundle deploy` crea el app y sube el código, pero no lo despliega: el app
+# queda con el compute encendido y sin servir nada. `bundle run` sobre el
+# recurso del app es lo que instala dependencias y levanta el proceso. Arrancar
+# el compute con `apps start` no alcanza — el app contesta 502.
+echo "  desplegando el código en el app (instala dependencias, tarda unos minutos)..."
+if ! (cd "$REPO_ROOT" && db bundle run centro_inteligencia -t "$TARGET" "${VARS[@]}") 2>&1 | sed 's/^/    /'; then
+    malo "El app no llegó a desplegarse."
+    echo "     Reintentá:  databricks bundle run centro_inteligencia -t $TARGET"
+    exit 1
 fi
 
-URL="$(db apps get "$EFF_APP" -o json 2>/dev/null | python3 -c '
+# El estado se confirma contra la API, no se asume: un app que quedó
+# UNAVAILABLE con el compute ACTIVE se ve igual de bien en el log del deploy.
+APP_JSON="$(db apps get "$EFF_APP" -o json 2>/dev/null || true)"
+URL="$(python3 -c '
 import json,sys
 try: print(json.load(sys.stdin).get("url") or "")
 except Exception: print("")
-' || true)"
+' <<< "$APP_JSON")"
+APP_ESTADO="$(python3 -c '
+import json,sys
+try: print((json.load(sys.stdin).get("app_status") or {}).get("state") or "")
+except Exception: print("")
+' <<< "$APP_JSON")"
+
+if [ "$APP_ESTADO" = "RUNNING" ]; then
+    ok "app sirviendo"
+else
+    echo "  ⚠ el app quedó en estado '${APP_ESTADO:-desconocido}'."
+    echo "    Mirá los logs en ${URL:-la consola} o reintentá:"
+    echo "    databricks bundle run centro_inteligencia -t $TARGET"
+fi
 
 echo
 echo "════════════════════════════════════════════════════════════════"
