@@ -356,10 +356,18 @@ echo "  App          ${URL:-(mirala en Compute > Apps)}"
 [ -n "$DASHBOARD_ID" ] && echo "  Dashboard    $DASHBOARD_ID"
 echo "  Esquema      ${EFF_CATALOG}.${EFF_SCHEMA}"
 echo
-echo "  Encender la operación   ./encender.sh${TARGET:+ -t $TARGET}"
-echo "  Apagarla                ./apagar.sh${TARGET:+ -t $TARGET}"
-echo "  Vaciar el dato vivo     ./scripts/limpiar.sh${TARGET:+ -t $TARGET}"
-echo "  Desinstalar todo        ./desinstalar.sh${TARGET:+ -t $TARGET}"
+
+# Databricks no guarda los `--var` con los que se desplegó, así que los scripts
+# de operación necesitan los mismos flags. En vez de pedir que se los acuerden,
+# se imprimen los comandos ya armados con lo que efectivamente se usó.
+COMUNES="${TARGET:+ -t $TARGET}${PROFILE:+ -p $PROFILE}"
+[ -n "$CATALOG" ] && COMUNES="$COMUNES --catalog $EFF_CATALOG"
+[ -n "$SCHEMA" ]  && COMUNES="$COMUNES --schema $EFF_SCHEMA"
+
+echo "  Encender la operación   ./encender.sh$COMUNES"
+echo "  Apagarla                ./apagar.sh$COMUNES"
+echo "  Vaciar el dato vivo     ./scripts/limpiar.sh$COMUNES"
+echo "  Desinstalar todo        ./desinstalar.sh$COMUNES"
 echo
 echo "  También podés encenderla desde el propio app, con el botón"
 echo "  \"Iniciar demo\" arriba a la derecha."

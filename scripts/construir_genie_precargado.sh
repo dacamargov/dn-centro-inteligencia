@@ -15,4 +15,4 @@ parsear_flags "$@"
 cargar_config
 
 export PROFILE="${PROFILE:-DEFAULT}" WAREHOUSE_ID CATALOG SCHEMA CLIENTE FQ_SCHEMA
-exec python3 "$REPO_ROOT/scripts/construir_genie_precargado.py" "${RESTO[@]:-}"
+exec python3 "$REPO_ROOT/scripts/construir_genie_precargado.py" ${RESTO[@]+"${RESTO[@]}"}

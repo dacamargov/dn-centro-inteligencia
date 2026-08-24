@@ -15,14 +15,25 @@ PROFILE="${PROFILE:-}"
 # Cada script llama a `parsear_flags "$@"` y después usa "${RESTO[@]}" para lo suyo.
 # El workspace se elige igual que en el instalador: por perfil, por --host, o por
 # lo que ya tenga configurado el CLI. Ninguno está escrito en el repositorio.
+#
+# También acepta las mismas variables que el instalador. Databricks no guarda en
+# el workspace los `--var` con los que se desplegó —ni `bundle summary` los
+# recuerda— así que si la instalación no usó los defaults, hay que repetir el
+# flag. `instalar.sh` termina imprimiendo estos comandos ya armados con lo que se
+# usó, para no tener que acordarse.
 RESTO=()
+VARS=()
 parsear_flags() {
     RESTO=()
+    VARS=()
     while [ $# -gt 0 ]; do
         case "$1" in
             -t|--target)  TARGET="$2"; shift 2 ;;
             -p|--profile) PROFILE="$2"; shift 2 ;;
             --host)       export DATABRICKS_HOST="$2"; shift 2 ;;
+            --catalog)    VARS+=(--var "catalog=$2"); shift 2 ;;
+            --schema)     VARS+=(--var "schema=$2"); shift 2 ;;
+            --var)        VARS+=(--var "$2"); shift 2 ;;
             *)            RESTO+=("$1"); shift ;;
         esac
     done
@@ -66,7 +77,9 @@ _BUNDLE_JSON=""
 
 cargar_bundle() {
     [ -n "$_BUNDLE_JSON" ] && return 0
-    _BUNDLE_JSON="$(cd "$REPO_ROOT" && db bundle validate -t "$TARGET" -o json 2>/dev/null || true)"
+    # `${VARS[@]+...}` y no `"${VARS[@]}"`: el bash 3.2 que trae macOS aborta al
+    # expandir un array vacío con `set -u`, y acá VARS lo está casi siempre.
+    _BUNDLE_JSON="$(cd "$REPO_ROOT" && db bundle validate -t "$TARGET" ${VARS[@]+"${VARS[@]}"} -o json 2>/dev/null || true)"
     # `bundle validate` puede escribir JSON parcial aunque haya fallado, así que
     # no alcanza con ver si la salida está vacía: hay que confirmar que trae las
     # variables resueltas.
@@ -118,10 +131,9 @@ cargar_config() {
     FQ_SCHEMA="${CATALOG}.${SCHEMA}"
 
     # El warehouse lo elige `instalar.sh` en el momento, así que su default en el
-    # bundle está vacío. En vez de guardarlo en un archivo local —que se
-    # desincroniza y no viaja entre máquinas— se le pregunta al app instalado:
-    # el recurso adjunto es la respuesta correcta por definición, porque es el
-    # warehouse sobre el que el app tiene permiso.
+    # bundle está vacío. No hace falta pedirlo de nuevo: se lo pregunta al app
+    # instalado, y el recurso adjunto es la respuesta correcta por definición
+    # porque es el único warehouse sobre el que el app tiene permiso.
     if [ -z "$WAREHOUSE_ID" ] && [ -n "$APP_NAME" ]; then
         WAREHOUSE_ID="$(db apps get "$APP_NAME" -o json 2>/dev/null | python3 -c '
 import json, sys

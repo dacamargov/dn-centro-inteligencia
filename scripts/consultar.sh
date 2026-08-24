@@ -13,4 +13,4 @@ parsear_flags "$@"
 cargar_config
 
 PROFILE="${PROFILE:-DEFAULT}" WAREHOUSE_ID="$WAREHOUSE_ID" FQ_SCHEMA="$FQ_SCHEMA" \
-  python3 "$REPO_ROOT/scripts/consultar.py" "${RESTO[@]:-}"
+  python3 "$REPO_ROOT/scripts/consultar.py" ${RESTO[@]+"${RESTO[@]}"}

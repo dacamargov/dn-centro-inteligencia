@@ -15,7 +15,7 @@ set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/scripts/_comun.sh"
 parsear_flags "$@"
 SIN_PREGUNTAR=0
-for a in "${RESTO[@]:-}"; do [ "$a" = "--si" ] && SIN_PREGUNTAR=1; done
+for a in ${RESTO[@]+"${RESTO[@]}"}; do [ "$a" = "--si" ] && SIN_PREGUNTAR=1; done
 cargar_config
 
 echo "════════════════════════════════════════════════════════════════"
