@@ -25,4 +25,4 @@ done
 
 echo
 echo "✅ Jobs pausados. Las corridas en vuelo terminan solas."
-echo "   Encender: ./encender.sh${TARGET:+ -t $TARGET}"
+echo "   Encender: ./encender.sh$(flags_usados)"

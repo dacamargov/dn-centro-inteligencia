@@ -39,6 +39,24 @@ parsear_flags() {
     done
 }
 
+# Los flags con los que se invocó este script, para poder sugerir el siguiente
+# comando sin que quede a medias. Un mensaje que dice "./apagar.sh -t pruebas"
+# cuando en realidad hacían falta también el perfil y el catálogo manda al que
+# lee directo a un error.
+flags_usados() {
+    local s="${TARGET:+ -t $TARGET}${PROFILE:+ -p $PROFILE}"
+    local i
+    for i in ${VARS[@]+"${VARS[@]}"}; do
+        [ "$i" = "--var" ] && continue
+        case "$i" in
+            catalog=*) s="$s --catalog ${i#catalog=}" ;;
+            schema=*)  s="$s --schema ${i#schema=}" ;;
+            *)         s="$s --var $i" ;;
+        esac
+    done
+    printf '%s' "$s"
+}
+
 # ---- CLI de Databricks -------------------------------------------------------
 db() {
     if [ -n "$PROFILE" ]; then

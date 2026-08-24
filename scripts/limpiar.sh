@@ -63,4 +63,4 @@ fi
 
 echo
 echo "✅ Listo. Los jobs quedaron pausados."
-echo "   Arrancar de nuevo: ./encender.sh${TARGET:+ -t $TARGET}"
+echo "   Arrancar de nuevo: ./encender.sh$(flags_usados)"

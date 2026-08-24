@@ -43,7 +43,7 @@ encender_grupo "[1/2] Generadores de datos" jobs_generadores
 if [ "$ENCENDIDOS" -eq 0 ]; then
     echo
     echo "❌ No encontré ningún job con el prefijo '$JOB_PREFIX'."
-    echo "   ¿Instalaste este target?  ./instalar.sh${TARGET:+ -t $TARGET}"
+    echo "   ¿Instalaste este target?  ./instalar.sh$(flags_usados)"
     exit 1
 fi
 
@@ -69,4 +69,4 @@ fi
 
 echo
 echo "✅ Operación en marcha. Generadores cada 1-5 min, agentes cada 2 min."
-echo "   Apagar: ./apagar.sh${TARGET:+ -t $TARGET}"
+echo "   Apagar: ./apagar.sh$(flags_usados)"

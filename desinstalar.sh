@@ -40,16 +40,33 @@ fi
 
 # El dashboard va primero: no es un recurso del bundle, así que `destroy` no lo
 # alcanza y quedaría huérfano en la carpeta del workspace.
+#
+# Se lo busca por nombre en el workspace, no en un archivo local: el id que
+# `instalar.sh` deja en dashboards/ no está versionado, así que quien clone el
+# repo para desinstalar no lo tiene, y el dashboard sobreviviría en silencio.
 ID_FILE="$REPO_ROOT/dashboards/.dashboard_id.$TARGET"
-if [ -f "$ID_FILE" ]; then
-    DID="$(tr -d '\n' < "$ID_FILE")"
-    if [ -n "$DID" ]; then
-        db api delete "/api/2.0/lakeview/dashboards/$DID" >/dev/null 2>&1 \
-          && echo "  borrado el dashboard $DID" \
-          || echo "  no pude borrar el dashboard $DID (borralo desde la interfaz)"
-    fi
-    rm -f "$ID_FILE"
+TITULO="dichter & neira · Centro de Inteligencia"
+[ "$TARGET" != "demo" ] && TITULO="$TITULO [$TARGET]"
+
+DID=""
+[ -f "$ID_FILE" ] && DID="$(tr -d '\n' < "$ID_FILE")"
+if [ -z "$DID" ]; then
+    DID="$(db api get /api/2.0/lakeview/dashboards 2>/dev/null | TITULO="$TITULO" python3 -c '
+import json, os, sys
+try: ds = json.load(sys.stdin).get("dashboards") or []
+except Exception: ds = []
+for d in ds:
+    if d.get("display_name") == os.environ["TITULO"] and d.get("lifecycle_state") != "TRASHED":
+        print(d.get("dashboard_id", "")); break
+' || true)"
 fi
+
+if [ -n "$DID" ]; then
+    db api delete "/api/2.0/lakeview/dashboards/$DID" >/dev/null 2>&1 \
+      && echo "  borrado el dashboard $DID" \
+      || echo "  no pude borrar el dashboard $DID (borralo desde la interfaz)"
+fi
+rm -f "$ID_FILE"
 
 echo
 (cd "$REPO_ROOT" && db bundle destroy -t "$TARGET" --auto-approve) 2>&1 | sed 's/^/  /'

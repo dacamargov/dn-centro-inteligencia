@@ -425,6 +425,35 @@ SERIALIZED = {
 # ============================================================
 # CREACIÓN
 # ============================================================
+def cli(*args):
+    return subprocess.run(
+        ["databricks", *args, "-p", PROFILE], capture_output=True, text=True,
+    )
+
+
+def dashboard_existente():
+    """El dashboard activo con este nombre, si lo hay.
+
+    Se compara solo por `display_name`: la lista de la API devuelve
+    `parent_path` en null, así que exigir que coincida hacía que nunca se
+    encontrara nada y cada reinstalación chocara contra su propio dashboard.
+    """
+    salida = cli("api", "get", "/api/2.0/lakeview/dashboards")
+    try:
+        candidatos = json.loads(salida.stdout).get("dashboards", [])
+    except Exception:
+        return None
+    for d in candidatos:
+        if d.get("display_name") == TITLE and d.get("lifecycle_state") != "TRASHED":
+            return d.get("dashboard_id")
+    return None
+
+
+def guardar_id(did):
+    with open(DASHBOARD_ID_FILE, "w") as f:
+        f.write((did or "") + "\n")
+
+
 def main():
     payload = {
         "display_name": TITLE,
@@ -432,36 +461,42 @@ def main():
         "parent_path": PARENT_PATH,
         "serialized_dashboard": json.dumps(SERIALIZED, ensure_ascii=False),
     }
-    body = json.dumps(payload, ensure_ascii=False)
+    cli("workspace", "mkdirs", PARENT_PATH)
 
-    subprocess.run(
-        ["databricks", "workspace", "mkdirs", PARENT_PATH, "-p", PROFILE],
-        check=False, capture_output=True,
-    )
+    # Reinstalar sobre una instalación previa tiene que funcionar, y crear un
+    # dashboard nuevo cada vez rompería los enlaces que alguien haya guardado.
+    # Si ya existe, se actualiza en su lugar y se conserva su id.
+    previo = dashboard_existente()
+    if previo:
+        actualizado = cli(
+            "api", "patch", f"/api/2.0/lakeview/dashboards/{previo}",
+            "--json", json.dumps({
+                "display_name": TITLE,
+                "warehouse_id": WAREHOUSE_ID,
+                "serialized_dashboard": json.dumps(SERIALIZED, ensure_ascii=False),
+            }, ensure_ascii=False),
+        )
+        if actualizado.returncode == 0:
+            print("\n✅ Dashboard actualizado")
+            print(f"  dashboard_id : {previo}")
+            print(f"  display_name : {TITLE}")
+            guardar_id(previo)
+            return
+        print(f"  no pude actualizar el dashboard {previo}, intento recrearlo")
+        cli("api", "delete", f"/api/2.0/lakeview/dashboards/{previo}")
 
-    # Si ya existe uno con el mismo nombre en esta carpeta lo borramos: cada corrida recrea.
-    existing = subprocess.run(
-        ["databricks", "api", "get", "/api/2.0/lakeview/dashboards", "-p", PROFILE],
-        capture_output=True, text=True,
-    )
-    try:
-        for d in json.loads(existing.stdout).get("dashboards", []):
-            if d.get("display_name") == TITLE and d.get("parent_path") == PARENT_PATH:
-                did = d["dashboard_id"]
-                print(f"  borrando el dashboard previo con el mismo nombre: {did}")
-                subprocess.run(
-                    ["databricks", "api", "delete",
-                     f"/api/2.0/lakeview/dashboards/{did}", "-p", PROFILE],
-                    capture_output=True, text=True,
-                )
-    except Exception:
-        pass
+    out = cli("api", "post", "/api/2.0/lakeview/dashboards",
+              "--json", json.dumps(payload, ensure_ascii=False))
 
-    out = subprocess.run(
-        ["databricks", "api", "post", "/api/2.0/lakeview/dashboards",
-         "-p", PROFILE, "--json", body],
-        capture_output=True, text=True,
-    )
+    # Borrar un dashboard lo manda a la papelera pero deja su archivo .lvdash.json
+    # en la carpeta, y ese archivo basta para que el POST choque por nombre
+    # repetido. Se limpia el huérfano y se reintenta una vez.
+    if out.returncode != 0 and "already exists" in (out.stderr or ""):
+        print("  quedaba un archivo de dashboard huérfano; lo borro y reintento")
+        cli("workspace", "delete", f"{PARENT_PATH}/{TITLE}.lvdash.json")
+        out = cli("api", "post", "/api/2.0/lakeview/dashboards",
+                  "--json", json.dumps(payload, ensure_ascii=False))
+
     if out.returncode != 0:
         print("❌ falló la creación del dashboard")
         print(out.stderr[:1000])
@@ -473,8 +508,7 @@ def main():
         print(f"  dashboard_id : {d.get('dashboard_id')}")
         print(f"  display_name : {d.get('display_name')}")
         print(f"  path         : {d.get('path')}")
-        with open(DASHBOARD_ID_FILE, "w") as f:
-            f.write(d.get("dashboard_id", "") + "\n")
+        guardar_id(d.get("dashboard_id"))
     except json.JSONDecodeError:
         print("No pude interpretar la respuesta como JSON:")
         print(out.stdout[:1000])
