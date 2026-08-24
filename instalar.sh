@@ -117,8 +117,10 @@ fi
 ok "autenticado como $YO"
 if [ -n "$HOST" ]; then
     ok "workspace  $HOST"
+elif [ -n "$PROFILE" ]; then
+    ok "workspace  perfil $PROFILE"
 else
-    ok "workspace  ${PROFILE:+perfil $PROFILE}${PROFILE:-perfil por defecto del CLI}"
+    ok "workspace  perfil por defecto del CLI"
 fi
 
 # ---------------------------------------------------------------------------
@@ -185,6 +187,25 @@ EFF_SCHEMA="$(leer_var schema)"
 EFF_CLIENTE="$(leer_var cliente)"
 EFF_APP="$(leer_var app_name)"
 EFF_PREFIX="$(leer_var job_prefix)"
+# El catálogo por defecto es 'main' porque es el nombre habitual, pero no está
+# garantizado: hay workspaces que nunca lo crearon. Conviene decirlo acá, con la
+# lista de los que sí existen, y no dejar que reviente adentro del deploy.
+if ! db catalogs get "$EFF_CATALOG" >/dev/null 2>&1; then
+    malo "El catálogo '$EFF_CATALOG' no existe o no tenés acceso."
+    DISPONIBLES="$(db catalogs list -o json 2>/dev/null | python3 -c '
+import json, sys
+try: cats = json.load(sys.stdin)
+except Exception: cats = []
+# Los catálogos de sistema y de Delta Sharing son de solo lectura: ofrecerlos
+# como destino sería mandar al que instala a un error de permisos.
+print("  ".join(c["name"] for c in cats
+                if c.get("catalog_type") not in ("SYSTEM_CATALOG", "DELTASHARING_CATALOG")))
+' || true)"
+    [ -n "$DISPONIBLES" ] && echo "     Podés escribir en:  $DISPONIBLES"
+    echo "     Elegí uno:  ./instalar.sh --catalog <nombre>"
+    exit 1
+fi
+
 ok "esquema  ${EFF_CATALOG}.${EFF_SCHEMA}"
 ok "app      ${EFF_APP}"
 ok "jobs     prefijo '${EFF_PREFIX}'"
