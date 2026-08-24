@@ -16,21 +16,31 @@
 #       --schema <nombre>    esquema (default: ditcher_neira)
 #       --cliente <nombre>   fabricante del estudio (default: Nestlé)
 #       --sin-dashboard      omite el dashboard AI/BI
+#       --sin-genie          omite la sala de Genie (el app queda en modo demo)
 #       --sin-datos          crea todo pero no siembra (útil para reinstalar)
 #       --var clave=valor    cualquier otra variable del bundle (repetible);
-#                            por ejemplo --var genie_space_id=01ef… o
-#                            --var lakebase_host=…  Ver databricks.yml.
+#                            por ejemplo --var lakebase_capacity=CU_2.
+#                            Ver databricks.yml.
 #
 # El workspace no está escrito en ninguna parte del repositorio: sale del perfil
 # del CLI, de --host, o de DATABRICKS_HOST. Lo mismo el catálogo, el esquema y el
 # warehouse. Este repositorio no conoce ningún workspace en particular.
 #
-# Casi todo lo hace `databricks bundle deploy`. Este script existe por tres
-# cosas que un bundle no puede resolver solo:
+# Casi todo lo hace `databricks bundle deploy`. Este script existe por las cosas
+# que un bundle no puede resolver solo:
 #   1. descubrir el warehouse, para no pedirle un id al que instala;
-#   2. crear el dashboard AI/BI antes del app, porque el app necesita su id;
-#   3. otorgarle permisos al service principal del app, que no existe hasta que
+#   2. crear la instancia de Lakebase, porque el app la necesita adjunta como
+#      recurso y un bundle no garantiza ese orden;
+#   3. crear el dashboard AI/BI y la sala de Genie, cuyos ids el app recibe como
+#      variables de entorno — y la sala, además, después de sembrar, porque Genie
+#      valida las tablas al crearse;
+#   4. otorgarle permisos al service principal del app, que no existe hasta que
 #      el app existe — y sin esos permisos el tablero abre vacío.
+#
+# Lakebase forma parte de la instalación estándar. Es una instancia de Postgres
+# gestionada y factura mientras exista, aunque nadie la consulte: `./desinstalar.sh`
+# la borra. Para instalar sin ella hay que comentar el recurso `lakebase` en
+# resources/04_app.yml. Ver docs/LAKEBASE.md.
 # =============================================================================
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -44,6 +54,7 @@ CATALOG=""
 SCHEMA=""
 CLIENTE=""
 CON_DASHBOARD=1
+CON_GENIE=1
 CON_DATOS=1
 EXTRA_VARS=()
 
@@ -57,12 +68,13 @@ while [ $# -gt 0 ]; do
         --schema)         SCHEMA="$2"; shift 2 ;;
         --cliente)        CLIENTE="$2"; shift 2 ;;
         --sin-dashboard)  CON_DASHBOARD=0; shift ;;
+        --sin-genie)      CON_GENIE=0; shift ;;
         --sin-datos)      CON_DATOS=0; shift ;;
         --var)            EXTRA_VARS+=(--var="$2"); shift 2 ;;
         --var=*)          EXTRA_VARS+=(--var="${1#--var=}"); shift ;;
         # La ayuda es el encabezado de este archivo, para no escribirla dos veces.
         # El sed va en dos pasos porque el `\?` de GNU no existe en el sed de macOS.
-        -h|--help)        sed -n '2,29p' "$0" | sed -e 's/^# //' -e 's/^#//'; exit 0 ;;
+        -h|--help)        sed -n '2,42p' "$0" | sed -e 's/^# //' -e 's/^#//'; exit 0 ;;
         *) echo "opción desconocida: $1 (probá --help)"; exit 1 ;;
     esac
 done
@@ -84,7 +96,7 @@ echo "  instalación — target '$TARGET'"
 echo "════════════════════════════════════════════════════════════════"
 
 # ---------------------------------------------------------------------------
-paso "1/7 · Revisando prerrequisitos"
+paso "1/9 · Revisando prerrequisitos"
 # ---------------------------------------------------------------------------
 command -v databricks >/dev/null || {
     malo "No encontré el CLI de Databricks."
@@ -124,7 +136,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-paso "2/7 · Resolviendo el SQL Warehouse"
+paso "2/9 · Resolviendo el SQL Warehouse"
 # ---------------------------------------------------------------------------
 if [ -z "$WAREHOUSE_ID" ]; then
     # Se prefiere uno serverless y encendido: es el que responde sin esperar el
@@ -175,7 +187,7 @@ print("" if val is None else val)
 ' <<< "$CONFIG_JSON"
 }
 
-paso "3/7 · Validando el bundle"
+paso "3/9 · Validando el bundle"
 CONFIG_JSON="$( (cd "$REPO_ROOT" && db bundle validate -t "$TARGET" "${VARS[@]}" -o json 2>/dev/null) || true )"
 if [ -z "$CONFIG_JSON" ]; then
     malo "El bundle no valida. Corré para ver el detalle:"
@@ -187,6 +199,10 @@ EFF_SCHEMA="$(leer_var schema)"
 EFF_CLIENTE="$(leer_var cliente)"
 EFF_APP="$(leer_var app_name)"
 EFF_PREFIX="$(leer_var job_prefix)"
+EFF_LB_INSTANCIA="$(leer_var lakebase_instance)"
+EFF_LB_DB="$(leer_var lakebase_db)"
+EFF_LB_CAPACIDAD="$(leer_var lakebase_capacity)"
+EFF_GENIE_TITULO="$(leer_var genie_title)"
 # El catálogo por defecto es 'main' porque es el nombre habitual, pero no está
 # garantizado: hay workspaces que nunca lo crearon. Conviene decirlo acá, con la
 # lista de los que sí existen, y no dejar que reviente adentro del deploy.
@@ -210,9 +226,67 @@ ok "esquema  ${EFF_CATALOG}.${EFF_SCHEMA}"
 ok "app      ${EFF_APP}"
 ok "jobs     prefijo '${EFF_PREFIX}'"
 ok "cliente  ${EFF_CLIENTE}"
+ok "lakebase ${EFF_LB_INSTANCIA} (${EFF_LB_CAPACIDAD})"
 
 # ---------------------------------------------------------------------------
-paso "4/7 · Dashboard AI/BI"
+paso "4/9 · Instancia de Lakebase"
+# ---------------------------------------------------------------------------
+# Va antes del deploy porque el app la lleva adjunta como recurso: si no existe,
+# el deploy del app falla. Y ese vínculo es justamente lo que hace que Databricks
+# le cree al service principal su rol de Postgres dentro de la instancia.
+#
+# Crear una instancia tarda varios minutos. Si ya existe se reusa tal cual, así
+# que reinstalar no vuelve a esperar ni duplica el costo.
+LB_ESTADO="$(db database get-database-instance "$EFF_LB_INSTANCIA" -o json 2>/dev/null | python3 -c '
+import json,sys
+try: print(json.load(sys.stdin).get("state") or "")
+except Exception: print("")
+' || true)"
+
+if [ -z "$LB_ESTADO" ]; then
+    echo "  creando '$EFF_LB_INSTANCIA' ($EFF_LB_CAPACIDAD) — tarda unos minutos..."
+    PAYLOAD="$(NOMBRE="$EFF_LB_INSTANCIA" CAP="$EFF_LB_CAPACIDAD" python3 -c '
+import json, os
+print(json.dumps({"name": os.environ["NOMBRE"], "capacity": os.environ["CAP"]}))
+')"
+    if ! db database create-database-instance --json "$PAYLOAD" >/dev/null 2>&1; then
+        malo "No pude crear la instancia de Lakebase '$EFF_LB_INSTANCIA'."
+        echo "     Probá a mano para ver el error real:"
+        echo "     databricks database create-database-instance --json '$PAYLOAD'"
+        echo "     Si tu workspace no tiene Lakebase habilitado, comentá el recurso"
+        echo "     'lakebase' en resources/04_app.yml y volvé a instalar."
+        exit 1
+    fi
+    ok "instancia creada"
+elif [ "$LB_ESTADO" = "AVAILABLE" ]; then
+    ok "ya existía y está disponible"
+else
+    # Una instancia detenida no acepta conexiones, y el job de más abajo fallaría
+    # con un timeout que no explica nada.
+    aviso "estado '$LB_ESTADO' — intento reanudarla"
+    db database update-database-instance "$EFF_LB_INSTANCIA" \
+        --json '{"stopped": false}' >/dev/null 2>&1 || true
+fi
+
+# El host se resuelve siempre, existiera la instancia o no: es lo que recibe el
+# app como LAKEBASE_HOST y no se guarda en ningún archivo del repositorio.
+LB_HOST="$(db database get-database-instance "$EFF_LB_INSTANCIA" -o json 2>/dev/null | python3 -c '
+import json,sys
+try: print(json.load(sys.stdin).get("read_write_dns") or "")
+except Exception: print("")
+' || true)"
+
+if [ -z "$LB_HOST" ]; then
+    malo "La instancia existe pero no tiene host todavía."
+    echo "     Esperá a que quede AVAILABLE y volvé a correr el instalador:"
+    echo "     databricks database get-database-instance $EFF_LB_INSTANCIA"
+    exit 1
+fi
+ok "host     $LB_HOST"
+VARS+=(--var="lakebase_host=$LB_HOST")
+
+# ---------------------------------------------------------------------------
+paso "5/9 · Dashboard AI/BI"
 # ---------------------------------------------------------------------------
 # Va antes del deploy porque el app recibe el id del dashboard como variable de
 # entorno. Hacerlo después obligaría a un segundo deploy solo para eso.
@@ -240,13 +314,13 @@ fi
 [ -n "$DASHBOARD_ID" ] && VARS+=(--var="dashboard_id=$DASHBOARD_ID")
 
 # ---------------------------------------------------------------------------
-paso "5/7 · Desplegando el bundle (esquema, jobs, app)"
+paso "6/9 · Desplegando el bundle (esquema, jobs, app)"
 # ---------------------------------------------------------------------------
 (cd "$REPO_ROOT" && db bundle deploy -t "$TARGET" "${VARS[@]}") 2>&1 | sed 's/^/  /'
-ok "esquema, 8 jobs y el app creados"
+ok "esquema, 9 jobs y el app creados"
 
 # ---------------------------------------------------------------------------
-paso "6/7 · Creando las tablas y sembrando el dato"
+paso "7/9 · Creando las tablas y sembrando el dato"
 # ---------------------------------------------------------------------------
 if [ "$CON_DATOS" -eq 1 ]; then
     echo "  esto tarda un par de minutos: aplica el DDL, siembra los maestros y"
@@ -257,8 +331,45 @@ else
     aviso "omitido por --sin-datos (después: databricks bundle run instalar -t $TARGET)"
 fi
 
+
 # ---------------------------------------------------------------------------
-paso "7/7 · Permisos del app y arranque"
+paso "8/9 · Sala de Genie"
+# ---------------------------------------------------------------------------
+# Va después de la semilla y no antes, aunque el app necesite el id de la sala:
+# Genie valida las tablas al crear el espacio y falla si todavía no existen. Por
+# eso el id se aplica con un segundo `bundle deploy`, que solo toca la
+# configuración del app y es rápido.
+#
+# La sala se crea con las tablas cargadas y con las instrucciones del negocio, que
+# es la parte que importa: sin ellas Genie promedia sobre toda la competencia
+# cuando la pregunta era sobre nuestras marcas, y responde plausible y mal.
+GENIE_ID=""
+if [ "$CON_GENIE" -eq 1 ]; then
+    GENIE_TITULO="$EFF_GENIE_TITULO"
+    GENIE_ID_FILE="$REPO_ROOT/scripts/.genie_id.$TARGET"
+    if PROFILE="${PROFILE:-DEFAULT}" WAREHOUSE_ID="$WAREHOUSE_ID" \
+       CATALOG="$EFF_CATALOG" SCHEMA="$EFF_SCHEMA" CLIENTE="$EFF_CLIENTE" \
+       GENIE_TITLE="$GENIE_TITULO" GENIE_ID_FILE="$GENIE_ID_FILE" \
+       PARENT_PATH="/Users/$YO" \
+       python3 "$REPO_ROOT/scripts/crear_genie.py" 2>&1 | sed 's/^/  /'; then
+        [ -f "$GENIE_ID_FILE" ] && GENIE_ID="$(tr -d '\n' < "$GENIE_ID_FILE")"
+    fi
+    if [ -z "$GENIE_ID" ]; then
+        aviso "sin sala real; el app va a usar el modo demostración precargado"
+    fi
+else
+    aviso "omitido por --sin-genie (el app usa preguntas precargadas)"
+fi
+if [ -n "$GENIE_ID" ]; then
+    VARS+=(--var="genie_space_id=$GENIE_ID")
+    echo "  aplicando el id de la sala en la configuración del app..."
+    (cd "$REPO_ROOT" && db bundle deploy -t "$TARGET" "${VARS[@]}") >/dev/null 2>&1 \
+      && ok "app configurado con la sala real" \
+      || aviso "no pude reconfigurar el app; va a quedar en modo demostración"
+fi
+
+# ---------------------------------------------------------------------------
+paso "9/9 · Permisos, arranque y camino caliente"
 # ---------------------------------------------------------------------------
 # El app corre con su propio service principal, que recién existe ahora. Adjuntar
 # el warehouse le dio permiso sobre el warehouse, no sobre el dato: sin estos
@@ -312,6 +423,22 @@ print(json.dumps({"access_control_list": [{
             printf '    a mano     %s\n' "$NOMBRE"
         fi
     done
+
+    # La sala de Genie es un objeto con su propia lista de control de acceso: el
+    # app la consulta con la identidad del service principal, no con la de quien
+    # instaló. Sin este permiso la pestaña devuelve 403.
+    if [ -n "$GENIE_ID" ]; then
+        PAYLOAD=$(SP="$SP" python3 -c '
+import json, os
+print(json.dumps({"access_control_list": [{
+    "service_principal_name": os.environ["SP"], "permission_level": "CAN_RUN"}]}))
+')
+        if db api patch "/api/2.0/permissions/genie/$GENIE_ID" --json "$PAYLOAD" >/dev/null 2>&1; then
+            printf '    ok         sala de Genie\n'
+        else
+            printf '    a mano     sala de Genie (dale CAN_RUN al service principal)\n'
+        fi
+    fi
 fi
 
 # `bundle deploy` crea el app y sube el código, pero no lo despliega: el app
@@ -347,6 +474,24 @@ else
     echo "    databricks bundle run centro_inteligencia -t $TARGET"
 fi
 
+# Recién ahora se puede preparar Postgres, y el orden no es casual: el rol del
+# service principal dentro de la instancia lo crea Databricks al desplegar el app
+# con el recurso `database` adjunto. Correr esto antes dejaría las tablas sin
+# permisos para el app, que conectaría bien y fallaría en el primer SELECT.
+LB_LISTO=0
+if [ "$CON_DATOS" -eq 1 ]; then
+    echo "  preparando Lakebase (esquema, perfiles de PDV y permisos)..."
+    if (cd "$REPO_ROOT" && db bundle run lakebase -t "$TARGET" "${VARS[@]}") 2>&1 | sed 's/^/    /'; then
+        ok "copiloto de campo listo"
+        LB_LISTO=1
+    else
+        aviso "el copiloto de campo quedó sin preparar. Reintentá:"
+        echo "    databricks bundle run lakebase -t $TARGET"
+    fi
+else
+    aviso "Lakebase sin sembrar por --sin-datos (después: databricks bundle run lakebase -t $TARGET)"
+fi
+
 echo
 echo "════════════════════════════════════════════════════════════════"
 echo "  ✅ Instalación completa"
@@ -354,7 +499,13 @@ echo "════════════════════════�
 echo
 echo "  App          ${URL:-(mirala en Compute > Apps)}"
 [ -n "$DASHBOARD_ID" ] && echo "  Dashboard    $DASHBOARD_ID"
+[ -n "$GENIE_ID" ]     && echo "  Genie        $GENIE_ID"
 echo "  Esquema      ${EFF_CATALOG}.${EFF_SCHEMA}"
+if [ "$LB_LISTO" -eq 1 ]; then
+    echo "  Lakebase     ${EFF_LB_INSTANCIA} · base ${EFF_LB_DB}"
+else
+    echo "  Lakebase     ${EFF_LB_INSTANCIA} (sin preparar)"
+fi
 echo
 
 # Databricks no guarda los `--var` con los que se desplegó, así que los scripts

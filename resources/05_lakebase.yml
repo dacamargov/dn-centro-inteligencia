@@ -1,0 +1,40 @@
+# =============================================================================
+# Lakebase — el job que prepara el camino caliente del copiloto de campo
+# =============================================================================
+# La instancia de Postgres no se declara acá: `instalar.sh` la crea antes de
+# desplegar el bundle, porque el app la necesita adjunta como recurso y un bundle
+# no puede garantizar ese orden por sí solo.
+#
+# Este job hace el resto: aplica el esquema de Postgres, siembra los perfiles de
+# PDV desde Unity Catalog y le otorga privilegios al service principal del app.
+#
+# Corre después de desplegar el app, y el orden importa: el rol de Postgres del
+# service principal lo crea Databricks al adjuntar el recurso `database`, así que
+# antes del deploy los grants no tendrían a quién otorgarse.
+#
+# Es idempotente: `instalar.sh` lo corre en cada instalación y refrescar los
+# perfiles no pierde el log de sugerencias servidas.
+
+resources:
+  jobs:
+    lakebase:
+      name: "${var.job_prefix} lakebase — esquema, semilla y permisos"
+      # Sin `schedule`: corre a demanda, una vez por instalación.
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: preparar
+          notebook_task:
+            notebook_path: ../src/lakebase/preparar_lakebase.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              lakebase_instance: ${var.lakebase_instance}
+              lakebase_db: ${var.lakebase_db}
+              # Para poder leerle el service principal y otorgarle privilegios.
+              app_name: ${var.app_name}
+              ddl_path: ${workspace.file_path}/src/esquema/lakebase_schema.sql
+          environment_key: default

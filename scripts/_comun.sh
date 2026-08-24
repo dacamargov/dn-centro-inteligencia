@@ -146,6 +146,8 @@ cargar_config() {
     JOB_PREFIX="$(var job_prefix)"
     APP_NAME="$(var app_name)"
     WAREHOUSE_ID="$(var warehouse_id)"
+    LAKEBASE_INSTANCE="$(var lakebase_instance)"
+    GENIE_TITLE="$(var genie_title)"
     FQ_SCHEMA="${CATALOG}.${SCHEMA}"
 
     # El warehouse lo elige `instalar.sh` en el momento, así que su default en el
@@ -165,6 +167,7 @@ for r in recursos:
     fi
 
     export CATALOG SCHEMA CLIENTE JOB_PREFIX APP_NAME WAREHOUSE_ID FQ_SCHEMA
+    export LAKEBASE_INSTANCE GENIE_TITLE
 }
 
 # ---- Jobs de la demo --------------------------------------------------------

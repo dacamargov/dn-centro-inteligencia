@@ -24,24 +24,29 @@ La versión del CLI importa: el recurso `apps` del bundle y los `grants` declara
 esquemas no existen en versiones anteriores, y el error que devuelven no dice cuál es el
 problema. `instalar.sh` avisa si detecta una versión vieja.
 
-## Los siete pasos que corre `instalar.sh`
+## Los nueve pasos que corre `instalar.sh`
 
-El instalador es un envoltorio delgado sobre `databricks bundle deploy`. Existe porque hay tres
-cosas que un bundle no puede resolver solo, y las tres están marcadas abajo.
+El instalador es un envoltorio delgado sobre `databricks bundle deploy`. Existe por las cosas
+que un bundle no puede resolver solo, marcadas en negrita abajo. La instalación completa tarda
+entre diez y quince minutos; la mayor parte es la creación de la instancia de Lakebase.
 
 | Paso | Qué hace |
 |---|---|
 | 1 | Verifica el CLI, su versión y la autenticación. |
 | 2 | **Descubre el SQL Warehouse** — prefiere uno serverless y encendido. Con `--warehouse <id>` se fija a mano. |
 | 3 | Valida el bundle y muestra qué se va a crear, con los nombres ya resueltos. |
-| 4 | **Crea el dashboard AI/BI.** Va antes del deploy porque el app recibe el id del dashboard como variable de entorno; hacerlo después obligaría a un segundo deploy. |
-| 5 | `bundle deploy`: el esquema, los 8 jobs y el app. |
-| 6 | `bundle run instalar`: aplica el DDL, siembra los maestros y corre un primer pulso de cada generador. Un par de minutos. |
-| 7 | **Otorga permisos al service principal del app** y lo arranca. El SP recién existe después del paso 5, así que esto no puede ser declarativo. |
+| 4 | **Crea la instancia de Lakebase** y resuelve su host. Va antes del deploy porque el app la lleva adjunta como recurso: si no existe, el deploy del app falla. Si ya existe se reusa. |
+| 5 | **Crea el dashboard AI/BI.** También antes del deploy, porque el app recibe su id como variable de entorno. |
+| 6 | `bundle deploy`: el esquema, los 9 jobs y el app. |
+| 7 | `bundle run instalar`: aplica el DDL, siembra los maestros y corre un primer pulso de cada generador. Un par de minutos. |
+| 8 | **Crea la sala de Genie** con las tablas y las instrucciones del negocio, y vuelve a aplicar la configuración del app con su id. Va después de sembrar porque Genie valida las tablas al crear la sala. |
+| 9 | **Otorga permisos al service principal del app**, lo arranca y corre `bundle run lakebase` para dejar Postgres listo. El SP recién existe después del paso 6, así que nada de esto puede ser declarativo. |
 
-Del paso 7 depende que el tablero abra con dato: adjuntar el warehouse le da al app permiso
-sobre el warehouse, no sobre las tablas. Sin los `GRANT` todas las rutas devuelven
-`INSUFFICIENT_PERMISSIONS`.
+Del paso 9 depende casi todo lo visible. Adjuntar el warehouse le da al app permiso sobre el
+warehouse, no sobre las tablas: sin los `GRANT` todas las rutas devuelven
+`INSUFFICIENT_PERMISSIONS`. Y el orden dentro del paso importa — el rol de Postgres del service
+principal lo crea Databricks al desplegar el app con Lakebase adjunto, así que los permisos de
+Postgres se otorgan recién después de que el app existe.
 
 ## Elegir el workspace
 
@@ -76,9 +81,20 @@ Cualquier otra variable se pasa con `--var`:
 
 ```bash
 ./instalar.sh --var llm_endpoint=databricks-claude-sonnet-4-6
-./instalar.sh --var genie_space_id=01ef...      # ver docs/GENIE.md
-./instalar.sh --var lakebase_host=...           # ver docs/LAKEBASE.md
+./instalar.sh --var lakebase_capacity=CU_2         # instancia más grande
+./instalar.sh --var lakebase_instance=mi-postgres  # otro nombre de instancia
 ```
+
+Dos pasos se pueden omitir. El dashboard y la sala de Genie son opcionales: sin ellos el app
+oculta la pestaña del tablero y usa el modo demostración de Genie, respectivamente.
+
+```bash
+./instalar.sh --sin-dashboard --sin-genie
+```
+
+Lakebase no tiene un flag equivalente porque el app la lleva adjunta como recurso. Para
+instalar sin ella hay que comentar el recurso `lakebase` en `resources/04_app.yml`; ver
+[LAKEBASE.md](LAKEBASE.md).
 
 Para ver los valores resueltos sin crear nada:
 
@@ -140,9 +156,17 @@ Para mirar el dato desde la terminal, sin abrir la interfaz:
 ./desinstalar.sh
 ```
 
-Borra el app, los jobs, el dashboard y **el esquema con todas sus tablas y su dato**. Pide
-confirmación escribiendo el nombre del esquema. El catálogo y el warehouse no se tocan: no los
-creó esta instalación.
+Borra el app, los jobs, el dashboard, la sala de Genie, **el esquema con todas sus tablas y su
+dato** y **la instancia de Lakebase con el log de sugerencias**. Pide confirmación escribiendo
+el nombre del esquema. El catálogo y el warehouse no se tocan: no los creó esta instalación.
+
+La instancia se borra al final y no antes: mientras el app exista la tiene adjunta como
+recurso y Databricks rechaza el borrado. Si el desinstalador avisa que no pudo borrarla,
+conviene hacerlo a mano, porque sigue facturando:
+
+```bash
+databricks database delete-database-instance <nombre>
+```
 
 Si lo que querés es vaciar el dato y conservar la instalación, es `./scripts/limpiar.sh`.
 
@@ -179,9 +203,22 @@ El primer arranque instala dependencias de Python; tarda unos minutos. Después 
 logs en Compute → Apps → tu app → Logs.
 
 **La pestaña Campo dice "no configurado".**
-Es lo esperado: Lakebase viene apagado. Ver [LAKEBASE.md](LAKEBASE.md).
+El app no recibió `LAKEBASE_HOST`. Suele pasar por correr `databricks bundle deploy` a mano en
+vez de `./instalar.sh`: los `--var` no se guardan, así que el host se pierde. Volvé a correr
+`./instalar.sh`, que lo resuelve de la instancia en cada corrida.
+
+**La pestaña Campo conecta pero falla al leer.**
+El rol de Postgres del service principal existe pero sin privilegios sobre las tablas. Es el
+paso 9, que corre `bundle run lakebase`. Repetilo solo:
+
+```bash
+databricks bundle run lakebase -t demo
+```
+
+**La creación de la sala de Genie falla diciendo que una tabla no existe.**
+La sala valida sus fuentes al crearse, así que las tablas tienen que estar. Corré primero
+`databricks bundle run instalar -t demo` y después `./instalar.sh` de nuevo.
 
 **El chat de Genie responde con cifras que no cuadran con el tablero.**
-Está en modo demostración, con respuestas precargadas de otra instalación. Regeneralas con la
-operación andando un rato: `./scripts/construir_genie_precargado.sh` y volvé a desplegar. O
-conectá una sala real — ver [GENIE.md](GENIE.md).
+Está en modo demostración, con respuestas precargadas de otra instalación. Significa que la
+sala real no se creó: mirá el paso 8 en la salida del instalador. Ver [GENIE.md](GENIE.md).

@@ -23,15 +23,16 @@ resources:
             id: ${var.warehouse_id}
             permission: CAN_USE
 
-        # Copiloto de campo. Descomentar para encenderlo — es el paso 2 de
-        # docs/LAKEBASE.md, y es lo que hace que Databricks le cree al service
-        # principal del app su rol de Postgres dentro de la instancia.
-        # - name: lakebase
-        #   description: Postgres que sirve el plan del PDV en menos de 100 ms.
-        #   database:
-        #     instance_name: ${var.lakebase_instance}
-        #     database_name: ${var.lakebase_db}
-        #     permission: CAN_CONNECT_AND_CREATE
+        # Copiloto de campo. Adjuntar la instancia acá es lo que hace que
+        # Databricks le cree al service principal del app su rol de Postgres
+        # dentro de ella; sin eso el app no tiene con qué autenticarse.
+        # La instancia la crea `instalar.sh` antes de desplegar el app.
+        - name: lakebase
+          description: Postgres que sirve el plan del PDV en menos de 100 ms.
+          database:
+            instance_name: ${var.lakebase_instance}
+            database_name: ${var.lakebase_db}
+            permission: CAN_CONNECT_AND_CREATE
 
       config:
         command:
@@ -59,19 +60,22 @@ resources:
           - name: DASHBOARD_ID
             value: ${var.dashboard_id}
           # Vacío = Genie en modo demostración, con preguntas precargadas.
+          # `instalar.sh` crea la sala real y pasa su id acá.
           - name: GENIE_SPACE_ID
             value: ${var.genie_space_id}
-          # Vacío = la pestaña de campo muestra "no configurado" y no consulta nada.
+          # Vacío = la pestaña de campo muestra "no configurado" y no consulta
+          # nada. `instalar.sh` lo resuelve de la instancia en cada corrida.
           - name: LAKEBASE_HOST
             value: ${var.lakebase_host}
           - name: LAKEBASE_DB
             value: ${var.lakebase_db}
           - name: LAKEBASE_PORT
             value: "5432"
-          # Se deja vacío a propósito cuando Lakebase va adjunto como recurso: en
-          # ese caso Databricks le crea al service principal su rol de Postgres y
-          # su token OAuth normal alcanza. Con un nombre acá, el app intentaría
-          # emitir una credencial del endpoint, que es justo lo que el SP no puede.
-          # Ver docs/LAKEBASE.md.
+          # Va vacío a propósito, y no con el nombre de la instancia. Con Lakebase
+          # adjunto como recurso, el token OAuth del service principal autentica
+          # directo contra Postgres. Si acá hubiera un nombre, el app tomaría el
+          # camino de los endpoints autoscaling e intentaría emitir una credencial
+          # del endpoint, que es justo lo que el SP no puede hacer. La instancia
+          # se declara arriba, en `resources`. Ver docs/LAKEBASE.md.
           - name: LAKEBASE_INSTANCE_NAME
-            value: ${var.lakebase_instance}
+            value: " "

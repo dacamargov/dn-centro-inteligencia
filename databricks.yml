@@ -72,9 +72,15 @@ variables:
 
   genie_space_id:
     description: >-
-      Sala de Genie real. Sin valor = el app usa el modo demostración con
-      preguntas y respuestas precargadas. Ver docs/GENIE.md.
+      Sala de Genie. La crea `instalar.sh` y pasa el id acá. Sin valor = el app
+      usa el modo demostración con preguntas y respuestas precargadas.
     default: " "
+
+  genie_title:
+    description: >-
+      Título de la sala de Genie. Es también la clave con la que `instalar.sh` la
+      reconoce entre corridas, así que cambiarlo crea una sala nueva.
+    default: "dichter & neira · Centro de Inteligencia"
 
   # Las variables opcionales llevan un espacio como default, no una cadena
   # vacía. La API de Databricks Apps rechaza una variable de entorno sin `value`,
@@ -83,20 +89,33 @@ variables:
   # falla con "Must specify environment variable source".
 
   # --- Lakebase (copiloto de campo) ------------------------------------------
-  # Apagado por defecto porque una instancia de Postgres cuesta aunque nadie la
-  # consulte. Ver docs/LAKEBASE.md para encenderlo.
-  lakebase_host:
-    description: >-
-      Host del endpoint de Lakebase. Sin valor = pestaña de campo deshabilitada.
-    default: " "
+  # Parte de la instalación estándar. La instancia la crea `instalar.sh` y su
+  # host se resuelve en cada corrida, así que `lakebase_host` no se escribe a
+  # mano. Ver docs/LAKEBASE.md — incluye la nota de costo.
   lakebase_instance:
     description: >-
-      Nombre corto de la instancia, para adjuntarla al app como recurso. Con esto
-      definido, Databricks le crea al service principal su rol de Postgres.
-    default: " "
+      Instancia de Lakebase (Postgres gestionado) que sirve el copiloto de campo.
+      `instalar.sh` la crea si no existe y la adjunta al app como recurso, que es
+      lo que hace que Databricks le cree al service principal su rol de Postgres.
+    default: dn-centro-lakebase
+
   lakebase_db:
-    description: Base de datos dentro de la instancia.
-    default: dncentro
+    description: >-
+      Base de datos dentro de la instancia. `databricks_postgres` es la que viene
+      creada de fábrica; usarla evita un CREATE DATABASE en la instalación.
+    default: databricks_postgres
+
+  lakebase_capacity:
+    description: >-
+      Tamaño de la instancia. CU_1 es el más chico y le sobra a la demo: el
+      copiloto sirve lecturas por clave sobre 140 filas.
+    default: CU_1
+
+  lakebase_host:
+    description: >-
+      Host de la instancia. No se configura a mano: `instalar.sh` lo resuelve de
+      la instancia y lo pasa con `--var` en cada corrida.
+    default: " "
 
 # -----------------------------------------------------------------------------
 # Qué se sube al workspace. Lo que no sirve en runtime se queda afuera: el
@@ -130,3 +149,5 @@ targets:
       schema: dn_pruebas
       app_name: dn-pruebas
       job_prefix: DNPruebas
+      lakebase_instance: dn-pruebas-lakebase
+      genie_title: "dichter & neira · Centro de Inteligencia (pruebas)"

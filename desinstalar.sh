@@ -5,7 +5,8 @@
 #   ./desinstalar.sh -t pruebas
 #   ./desinstalar.sh --si            # sin preguntar
 #
-# Se borra: el app, los 8 jobs, el esquema con TODAS sus tablas y el dashboard.
+# Se borra: el app, los 9 jobs, el esquema con TODAS sus tablas, el dashboard, la
+# sala de Genie y la instancia de Lakebase.
 # El catálogo y el SQL Warehouse no se tocan: no los creó esta instalación.
 #
 # Ojo: el esquema es un recurso del bundle, así que su borrado se lleva el dato.
@@ -27,6 +28,8 @@ echo "    · el app        ${APP_NAME}"
 echo "    · los jobs      prefijo '${JOB_PREFIX}'"
 echo "    · el esquema    ${FQ_SCHEMA}  ← con todas sus tablas y su dato"
 echo "    · el dashboard  del Centro de Inteligencia"
+echo "    · la sala       ${GENIE_TITLE}"
+echo "    · Lakebase      ${LAKEBASE_INSTANCE}  ← con el log de sugerencias"
 echo
 
 if [ "$SIN_PREGUNTAR" -eq 0 ]; then
@@ -68,6 +71,29 @@ if [ -n "$DID" ]; then
 fi
 rm -f "$ID_FILE"
 
+# La sala de Genie tampoco es un recurso del bundle. Se la busca por título, igual
+# que el dashboard, para que desinstalar funcione desde un clon limpio.
+GENIE_ID_FILE="$REPO_ROOT/scripts/.genie_id.$TARGET"
+GID=""
+[ -f "$GENIE_ID_FILE" ] && GID="$(tr -d '\n' < "$GENIE_ID_FILE")"
+if [ -z "$GID" ]; then
+    GID="$(db api get /api/2.0/genie/spaces 2>/dev/null | TITULO="$GENIE_TITLE" python3 -c '
+import json, os, sys
+try: salas = json.load(sys.stdin).get("spaces") or []
+except Exception: salas = []
+for s in salas:
+    if s.get("title") == os.environ["TITULO"]:
+        print(s.get("space_id", "")); break
+' || true)"
+fi
+
+if [ -n "$GID" ]; then
+    db genie trash-space "$GID" >/dev/null 2>&1 \
+      && echo "  borrada la sala de Genie $GID" \
+      || echo "  no pude borrar la sala $GID (borrala desde la interfaz)"
+fi
+rm -f "$GENIE_ID_FILE"
+
 echo
 (cd "$REPO_ROOT" && db bundle destroy -t "$TARGET" --auto-approve) 2>&1 | sed 's/^/  /'
 
@@ -81,6 +107,21 @@ if [ -n "$APP_NAME" ]; then
     done
     db apps get "$APP_NAME" >/dev/null 2>&1 \
       && echo "  ⚠ el app $APP_NAME sigue borrándose; esperá un minuto antes de reinstalar"
+fi
+
+# La instancia de Lakebase va al final y no antes: mientras el app exista, la
+# tiene adjunta como recurso y el borrado se rechaza. Recién con el app fuera se
+# puede soltar. Y hay que borrarla, porque una instancia de Postgres factura por
+# existir aunque nadie la consulte.
+if [ -n "$LAKEBASE_INSTANCE" ] && db database get-database-instance "$LAKEBASE_INSTANCE" >/dev/null 2>&1; then
+    echo
+    if db database delete-database-instance "$LAKEBASE_INSTANCE" >/dev/null 2>&1; then
+        echo "  borrada la instancia de Lakebase $LAKEBASE_INSTANCE"
+    else
+        echo "  ⚠ no pude borrar la instancia $LAKEBASE_INSTANCE."
+        echo "    Sigue facturando. Borrala a mano:"
+        echo "    databricks database delete-database-instance $LAKEBASE_INSTANCE"
+    fi
 fi
 
 echo

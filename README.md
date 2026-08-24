@@ -11,8 +11,9 @@ real de dichter & neira ni de ninguno de sus clientes.
 
 ## Instalación
 
-Un comando deja el workspace listo: esquema, tablas, dato sembrado, ocho jobs, el dashboard
-AI/BI y el app corriendo.
+Un comando deja el workspace listo: esquema, tablas, dato sembrado, nueve jobs, el dashboard
+AI/BI, una sala de Genie con el modelo de datos cargado, la instancia de Lakebase que sirve al
+copiloto de campo y el app corriendo. No queda nada por configurar a mano.
 
 ```bash
 git clone https://github.com/dacamargov/dn-centro-inteligencia.git
@@ -78,12 +79,14 @@ Cada carpeta responde una pregunta distinta. Si buscás **qué se crea en el wor
 │   ├── 01_esquema.yml          el esquema de UC + el job que crea y siembra las tablas
 │   ├── 02_generadores.yml      los 3 jobs que producen el dato
 │   ├── 03_agentes.yml          los 4 agentes
-│   └── 04_app.yml              el Databricks App y su configuración
+│   ├── 04_app.yml              el Databricks App y su configuración
+│   └── 05_lakebase.yml         el job que prepara Postgres para el copiloto
 │
 ├── src/
 │   ├── esquema/                el modelo de datos (DDL) y el notebook que lo aplica
 │   ├── datos/                  los generadores: visitas, precios, social
 │   ├── agentes/                un archivo por agente + las herramientas compartidas
+│   ├── lakebase/               el notebook que aplica, siembra y da permisos en Postgres
 │   └── app/                    el Databricks App (FastAPI + React)
 │
 ├── dashboards/                 el dashboard AI/BI que embebe el app
@@ -111,11 +114,14 @@ Cada carpeta responde una pregunta distinta. Si buscás **qué se crea en el wor
 | Jobs de generación de dato | 3 | `resources/02_generadores.yml` |
 | Jobs de agentes | 4 | `resources/03_agentes.yml` |
 | Job de instalación (a demanda) | 1 | `resources/01_esquema.yml` |
+| Job que prepara Lakebase (a demanda) | 1 | `resources/05_lakebase.yml` |
 | Databricks App | 1 | `resources/04_app.yml` |
 | Dashboard AI/BI | 1 | `dashboards/construir_dashboard.py` |
+| Sala de Genie | 1 | `scripts/crear_genie.py` |
+| Instancia de Lakebase (Postgres) | 1 | la crea `instalar.sh` |
 
-Nada más. No se crean catálogos, warehouses ni instancias de Postgres: el instalador usa lo
-que ya existe en el workspace.
+Nada más. El catálogo y el SQL Warehouse no se crean: el instalador usa los que ya existen en
+el workspace, y `./desinstalar.sh` borra todo lo de la lista sin tocarlos.
 
 ## Prerrequisitos
 
@@ -133,9 +139,10 @@ Todo es serverless y bajo demanda. Con la operación apagada (`./apagar.sh`), el
 auto-stop y el app detenido, el costo tiende a cero. Mientras corre consumen el SQL warehouse,
 el compute de Apps y los jobs serverless.
 
-**Lakebase viene apagado**, porque una instancia de Postgres cuesta aunque nadie la consulte.
-La pestaña Campo muestra "no configurado" hasta que lo habilites — ver
-[docs/LAKEBASE.md](docs/LAKEBASE.md).
+La excepción es **Lakebase**: es una instancia de Postgres gestionada y factura mientras
+exista, la consulte alguien o no. Se crea en tamaño `CU_1`, el más chico, y `./desinstalar.sh`
+la borra. Si vas a dejar la demo instalada sin usarla por un tiempo, conviene desinstalar en
+vez de solo apagar. El detalle está en [docs/LAKEBASE.md](docs/LAKEBASE.md).
 
 ## Aviso
 
