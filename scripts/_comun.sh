@@ -41,16 +41,43 @@ perfil_args() {
     [ -n "$PROFILE" ] && printf '%s\n%s\n' "-p" "$PROFILE"
 }
 
+# ---- El workspace tiene que estar accesible ---------------------------------
+# Sin esto los scripts siguen adelante con la configuración estática del bundle,
+# no encuentran ningún job —porque no pueden listarlos— y terminan anunciando
+# éxito sin haber hecho nada. Falla temprano y con un mensaje que dice qué hacer.
+verificar_workspace() {
+    local yo
+    yo="$(db current-user me -o json 2>/dev/null | python3 -c '
+import json, sys
+try: print(json.load(sys.stdin)["userName"])
+except Exception: print("")
+' || true)"
+    if [ -z "$yo" ]; then
+        echo "❌ No pude conectarme a ningún workspace de Databricks."
+        echo "   Autenticate:  databricks auth login${PROFILE:+ --profile $PROFILE}"
+        echo "   O indicá uno: $(basename "$0") --host https://<tu-workspace>"
+        return 1
+    fi
+    return 0
+}
+
 # ---- Lectura de la configuración resuelta del bundle ------------------------
 _BUNDLE_JSON=""
 
 cargar_bundle() {
     [ -n "$_BUNDLE_JSON" ] && return 0
     _BUNDLE_JSON="$(cd "$REPO_ROOT" && db bundle validate -t "$TARGET" -o json 2>/dev/null || true)"
-    if [ -z "$_BUNDLE_JSON" ]; then
+    # `bundle validate` puede escribir JSON parcial aunque haya fallado, así que
+    # no alcanza con ver si la salida está vacía: hay que confirmar que trae las
+    # variables resueltas.
+    if ! python3 -c '
+import json, sys
+d = json.loads(sys.stdin.read())
+sys.exit(0 if (d.get("variables") or {}).get("schema") else 1)
+' <<< "$_BUNDLE_JSON" 2>/dev/null; then
         echo "❌ No pude leer la configuración del bundle para el target '$TARGET'."
         echo "   Probá:  databricks bundle validate -t $TARGET"
-        echo "   Si falla por autenticación:  databricks auth login${PROFILE:+ --profile $PROFILE}"
+        _BUNDLE_JSON=""
         return 1
     fi
     return 0
@@ -80,6 +107,7 @@ print(r.get("name", ""))
 }
 
 cargar_config() {
+    verificar_workspace || return 1
     cargar_bundle || return 1
     CATALOG="$(var catalog)"
     SCHEMA="$(var schema)"
@@ -103,7 +131,7 @@ for r in recursos:
     w = r.get("sql_warehouse") or {}
     if w.get("id"):
         print(w["id"]); break
-')"
+' || true)"
     fi
 
     export CATALOG SCHEMA CLIENTE JOB_PREFIX APP_NAME WAREHOUSE_ID FQ_SCHEMA
@@ -115,15 +143,23 @@ for r in recursos:
 # parte del latido de la demo y no debe encenderse con ella.
 
 jobs_por_patron() {
-    local patron="$1"
-    db jobs list -o json 2>/dev/null | PAT="$patron" python3 -c '
+    local patron="$1" salida
+    salida="$(db jobs list -o json 2>/dev/null || true)"
+    PAT="$patron" python3 -c '
 import json, os, sys
+try:
+    jobs = json.loads(sys.stdin.read())
+except Exception:
+    # Sin lista de jobs no hay nada que reportar. El script que llama distingue
+    # "no hay jobs" de "no pude preguntar" por el estado del workspace, que ya
+    # se verificó antes de llegar acá.
+    sys.exit(0)
 pat = os.environ["PAT"]
-for j in json.load(sys.stdin):
+for j in jobs or []:
     nombre = (j.get("settings") or {}).get("name", "")
     if nombre.startswith(pat):
         print(j["job_id"], nombre, sep="\t")
-'
+' <<< "$salida"
 }
 
 jobs_generadores() { jobs_por_patron "$JOB_PREFIX datagen"; }

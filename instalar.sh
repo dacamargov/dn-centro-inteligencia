@@ -93,7 +93,7 @@ command -v databricks >/dev/null || {
 }
 command -v python3 >/dev/null || { malo "No encontré python3."; exit 1; }
 
-VERSION="$(databricks --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+VERSION="$(databricks --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
 ok "CLI de Databricks v${VERSION:-?}"
 # El recurso `apps` del bundle y `schemas` con grants necesitan CLI moderno. Con
 # una versión vieja el deploy falla con un error de campo desconocido, que no
@@ -107,7 +107,7 @@ YO="$(db current-user me -o json 2>/dev/null | python3 -c '
 import json,sys
 try: print(json.load(sys.stdin)["userName"])
 except Exception: print("")
-')"
+' || true)"
 if [ -z "$YO" ]; then
     malo "El CLI no está autenticado contra ningún workspace."
     echo "     Corré:  databricks auth login${PROFILE:+ --profile $PROFILE}"
@@ -140,7 +140,7 @@ def puntaje(w):
 ws = [w for w in ws if w.get("id")]
 if ws:
     print(sorted(ws, key=puntaje, reverse=True)[0]["id"])
-')"
+' || true)"
     if [ -z "$WAREHOUSE_ID" ]; then
         malo "No encontré ningún SQL Warehouse en el workspace."
         echo "     Creá uno (serverless, Small alcanza) y volvé a correr con --warehouse <id>."
@@ -159,20 +159,23 @@ VARS=(--var="warehouse_id=$WAREHOUSE_ID")
 [ -n "$CLIENTE" ] && VARS+=(--var="cliente=$CLIENTE")
 [ ${#EXTRA_VARS[@]} -gt 0 ] && VARS+=("${EXTRA_VARS[@]}")
 
+# La configuración resuelta se pide una sola vez y se lee de la caché: llamar a
+# `bundle validate` por cada variable es lento y multiplica las formas de fallar.
+CONFIG_JSON=""
 leer_var() {
-    (cd "$REPO_ROOT" && db bundle validate -t "$TARGET" "${VARS[@]}" -o json 2>/dev/null) \
-      | CLAVE="$1" python3 -c '
+    CLAVE="$1" python3 -c '
 import json, os, sys
 try: d = json.load(sys.stdin)
 except Exception: sys.exit(0)
 v = (d.get("variables") or {}).get(os.environ["CLAVE"]) or {}
 val = v.get("value", v.get("default", ""))
 print("" if val is None else val)
-'
+' <<< "$CONFIG_JSON"
 }
 
 paso "3/7 · Validando el bundle"
-if ! (cd "$REPO_ROOT" && db bundle validate -t "$TARGET" "${VARS[@]}" >/dev/null); then
+CONFIG_JSON="$( (cd "$REPO_ROOT" && db bundle validate -t "$TARGET" "${VARS[@]}" -o json 2>/dev/null) || true )"
+if [ -z "$CONFIG_JSON" ]; then
     malo "El bundle no valida. Corré para ver el detalle:"
     echo "     databricks bundle validate -t $TARGET"
     exit 1
@@ -243,7 +246,7 @@ SP="$(db apps get "$EFF_APP" -o json 2>/dev/null | python3 -c '
 import json,sys
 try: print(json.load(sys.stdin).get("service_principal_client_id") or "")
 except Exception: print("")
-')"
+' || true)"
 
 if [ -z "$SP" ]; then
     aviso "no pude leer el service principal del app; otorgá los permisos a mano (ver docs/INSTALACION.md)"
@@ -296,7 +299,7 @@ ESTADO="$(db apps get "$EFF_APP" -o json 2>/dev/null | python3 -c '
 import json,sys
 try: print((json.load(sys.stdin).get("compute_status") or {}).get("state") or "")
 except Exception: print("")
-')"
+' || true)"
 if [ "$ESTADO" != "ACTIVE" ]; then
     echo "  arrancando el app (el primer arranque instala dependencias)..."
     db apps start "$EFF_APP" >/dev/null 2>&1 || true
@@ -306,7 +309,7 @@ URL="$(db apps get "$EFF_APP" -o json 2>/dev/null | python3 -c '
 import json,sys
 try: print(json.load(sys.stdin).get("url") or "")
 except Exception: print("")
-')"
+' || true)"
 
 echo
 echo "════════════════════════════════════════════════════════════════"
