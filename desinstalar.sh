@@ -5,7 +5,7 @@
 #   ./desinstalar.sh -t pruebas
 #   ./desinstalar.sh --si            # sin preguntar
 #
-# Se borra: el app, los 7 jobs, el esquema con TODAS sus tablas y el dashboard.
+# Se borra: el app, los 8 jobs, el esquema con TODAS sus tablas y el dashboard.
 # El catálogo y el SQL Warehouse no se tocan: no los creó esta instalación.
 #
 # Ojo: el esquema es un recurso del bundle, así que su borrado se lleva el dato.
@@ -70,6 +70,18 @@ rm -f "$ID_FILE"
 
 echo
 (cd "$REPO_ROOT" && db bundle destroy -t "$TARGET" --auto-approve) 2>&1 | sed 's/^/  /'
+
+# Databricks borra el app de forma asincrónica: `destroy` vuelve enseguida y el
+# app se queda un rato en DELETING. Conviene esperarlo, porque si alguien
+# reinstala en ese momento el nombre todavía está tomado.
+if [ -n "$APP_NAME" ]; then
+    for _ in $(seq 1 30); do
+        db apps get "$APP_NAME" >/dev/null 2>&1 || break
+        sleep 5
+    done
+    db apps get "$APP_NAME" >/dev/null 2>&1 \
+      && echo "  ⚠ el app $APP_NAME sigue borrándose; esperá un minuto antes de reinstalar"
+fi
 
 echo
 echo "✅ Desinstalado. El catálogo y el warehouse quedaron intactos."

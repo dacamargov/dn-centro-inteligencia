@@ -243,7 +243,7 @@ fi
 paso "5/7 · Desplegando el bundle (esquema, jobs, app)"
 # ---------------------------------------------------------------------------
 (cd "$REPO_ROOT" && db bundle deploy -t "$TARGET" "${VARS[@]}") 2>&1 | sed 's/^/  /'
-ok "esquema, 7 jobs y el app creados"
+ok "esquema, 8 jobs y el app creados"
 
 # ---------------------------------------------------------------------------
 paso "6/7 · Creando las tablas y sembrando el dato"
