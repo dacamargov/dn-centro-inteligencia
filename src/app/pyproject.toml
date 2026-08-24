@@ -1,0 +1,17 @@
+[project]
+name = "dn-centro-inteligencia"
+version = "0.1.0"
+description = "dichter & neira · Centro de Inteligencia — demo ejecutiva en vivo"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "databricks-sql-connector>=3.5.0",
+    "databricks-sdk[openai]>=0.40.0",
+    "psycopg2-binary>=2.9.9",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.uv]
+dev-dependencies = []

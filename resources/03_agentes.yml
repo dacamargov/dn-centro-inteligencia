@@ -1,0 +1,111 @@
+# =============================================================================
+# Agentes — de dato a decisión
+# =============================================================================
+# Cuatro agentes, uno por dominio. Cada uno corre cada dos minutos, recibe
+# herramientas (no datos masticados), decide cuáles consultar y escribe como
+# máximo una recomendación accionable por tick — o ninguna, si no hay nada que
+# valga la pena levantar.
+#
+# Nacen PAUSADOS, igual que los generadores, y se encienden juntos. El app los
+# reconoce porque su nombre contiene "agent".
+#
+# `llm_endpoint` vacío deja a cada agente en su plantilla determinista: la demo
+# corre igual y sin costo de inferencia.
+
+resources:
+  jobs:
+    agente_pulso_ejecucion:
+      name: "${var.job_prefix} agent — pulso_ejecucion"
+      description: >-
+        Vigila la ejecución en el punto de venta: disponibilidad, cumplimiento de
+        planograma y share of shelf.
+      schedule:
+        quartz_cron_expression: "0 */2 * * * ?"
+        timezone_id: America/Panama
+        pause_status: PAUSED
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: main
+          notebook_task:
+            notebook_path: ../src/agentes/agent_pulso_ejecucion.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              llm_endpoint: ${var.llm_endpoint}
+          environment_key: default
+
+    agente_price_promo:
+      name: "${var.job_prefix} agent — price_promo"
+      description: >-
+        Busca SKUs fuera de rango de precio frente a su categoría y propone la
+        ventana de promoción que recupera volumen sin regalar margen.
+      schedule:
+        quartz_cron_expression: "0 */2 * * * ?"
+        timezone_id: America/Panama
+        pause_status: PAUSED
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: main
+          notebook_task:
+            notebook_path: ../src/agentes/agent_price_promo.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              llm_endpoint: ${var.llm_endpoint}
+          environment_key: default
+
+    agente_sentimiento_marca:
+      name: "${var.job_prefix} agent — sentimiento_marca"
+      description: >-
+        Lee la conversación del consumidor por marca y país, y detecta el post con
+        tracción que vale la pena amplificar.
+      schedule:
+        quartz_cron_expression: "0 */2 * * * ?"
+        timezone_id: America/Panama
+        pause_status: PAUSED
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: main
+          notebook_task:
+            notebook_path: ../src/agentes/agent_sentimiento_marca.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              llm_endpoint: ${var.llm_endpoint}
+          environment_key: default
+
+    agente_red_abastecimiento:
+      name: "${var.job_prefix} agent — red_abastecimiento"
+      description: >-
+        Cruza sobrestock contra quiebre en la malla de distribución y propone
+        traslados entre PDV, con su ganancia neta después de logística.
+      schedule:
+        quartz_cron_expression: "0 */2 * * * ?"
+        timezone_id: America/Panama
+        pause_status: PAUSED
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: main
+          notebook_task:
+            notebook_path: ../src/agentes/agent_red_abastecimiento.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              llm_endpoint: ${var.llm_endpoint}
+          environment_key: default

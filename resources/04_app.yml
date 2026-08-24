@@ -1,0 +1,77 @@
+# =============================================================================
+# El Databricks App — el Centro de Inteligencia que ve el usuario
+# =============================================================================
+# Acá no hay `app.yaml`. La configuración del app vive en `config` de este
+# recurso, con las variables del bundle ya resueltas: un solo lugar donde mirar
+# qué recibe el app, y nada generado a mano que pueda quedar desincronizado.
+#
+# El `WAREHOUSE_ID` no se escribe: se toma con `value_from` del recurso
+# `sql-warehouse` que se adjunta más abajo. Así el app usa el warehouse sobre el
+# que Databricks ya le dio permiso, en vez de un id copiado que puede no cuadrar.
+
+resources:
+  apps:
+    centro_inteligencia:
+      name: ${var.app_name}
+      description: "dichter & neira · Centro de Inteligencia"
+      source_code_path: ../src/app
+
+      resources:
+        - name: sql-warehouse
+          description: Warehouse que sirve todas las consultas del tablero.
+          sql_warehouse:
+            id: ${var.warehouse_id}
+            permission: CAN_USE
+
+        # Copiloto de campo. Descomentar para encenderlo — es el paso 2 de
+        # docs/LAKEBASE.md, y es lo que hace que Databricks le cree al service
+        # principal del app su rol de Postgres dentro de la instancia.
+        # - name: lakebase
+        #   description: Postgres que sirve el plan del PDV en menos de 100 ms.
+        #   database:
+        #     instance_name: ${var.lakebase_instance}
+        #     database_name: ${var.lakebase_db}
+        #     permission: CAN_CONNECT_AND_CREATE
+
+      config:
+        command:
+          - uvicorn
+          - app:app
+          - --host
+          - 0.0.0.0
+          - --port
+          - "8000"
+        env:
+          - name: CATALOG
+            value: ${var.catalog}
+          - name: SCHEMA
+            value: ${var.schema}
+          - name: WAREHOUSE_ID
+            value_from: sql-warehouse
+          # Fabricante del estudio: sale en los prompts y en el termómetro de marca.
+          - name: CLIENTE
+            value: ${var.cliente}
+          # Prefijo con el que el botón "Iniciar demo" localiza los jobs. Tiene que
+          # ser el mismo con el que se nombran en resources/02 y resources/03.
+          - name: JOB_PREFIX
+            value: ${var.job_prefix}
+          # Vacío = la pestaña del dashboard queda oculta. `instalar.sh` lo llena.
+          - name: DASHBOARD_ID
+            value: ${var.dashboard_id}
+          # Vacío = Genie en modo demostración, con preguntas precargadas.
+          - name: GENIE_SPACE_ID
+            value: ${var.genie_space_id}
+          # Vacío = la pestaña de campo muestra "no configurado" y no consulta nada.
+          - name: LAKEBASE_HOST
+            value: ${var.lakebase_host}
+          - name: LAKEBASE_DB
+            value: ${var.lakebase_db}
+          - name: LAKEBASE_PORT
+            value: "5432"
+          # Se deja vacío a propósito cuando Lakebase va adjunto como recurso: en
+          # ese caso Databricks le crea al service principal su rol de Postgres y
+          # su token OAuth normal alcanza. Con un nombre acá, el app intentaría
+          # emitir una credencial del endpoint, que es justo lo que el SP no puede.
+          # Ver docs/LAKEBASE.md.
+          - name: LAKEBASE_INSTANCE_NAME
+            value: ""

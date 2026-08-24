@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="grad" x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fcd34d"/>
+      <stop offset="0.55" stop-color="#f59e0b"/>
+      <stop offset="1" stop-color="#ea580c"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="6" y1="6" x2="58" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fffbeb" stop-opacity="0.55"/>
+      <stop offset="0.45" stop-color="#fffbeb" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- faceted plaque with diagonal corner cut -->
+  <path d="M 6 6 H 58 V 38 L 38 58 H 6 Z" fill="url(#grad)"/>
+  <!-- top-left sheen for depth -->
+  <path d="M 6 6 H 58 V 38 L 38 58 H 6 Z" fill="url(#sheen)"/>
+  <!-- hairline accent on the cut edge -->
+  <path d="M 58 38 L 38 58" stroke="#fef3c7" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- slab-serif L (clears the cut at y=52: cut starts at x=44, L ends at x=42) -->
+  <path d="M 18 14 H 28 V 42 H 42 V 52 H 18 Z" fill="#0a0a0a"/>
+</svg>

@@ -1,0 +1,124 @@
+# =============================================================================
+# dichter & neira · Centro de Inteligencia — Databricks Asset Bundle
+# =============================================================================
+# Este archivo es el único inventario de la demo. Todo lo que se crea en el
+# workspace —esquema, tablas, jobs, app— está declarado en `resources/`, un
+# archivo por dominio.
+#
+# Instalación completa:   ./instalar.sh
+# Ver qué se va a crear:  databricks bundle validate
+# Desinstalar todo:       ./desinstalar.sh
+#
+# `instalar.sh` es un envoltorio delgado sobre `databricks bundle deploy`. Hace
+# tres cosas que un bundle no puede hacer solo: descubrir el warehouse, crear el
+# dashboard AI/BI (que necesita el id antes de configurar el app) y otorgarle
+# permisos al service principal del app, que no existe hasta que el app existe.
+# =============================================================================
+
+bundle:
+  name: dn-centro-inteligencia
+
+include:
+  - resources/*.yml
+
+# -----------------------------------------------------------------------------
+# Variables — todo lo ajustable de la demo, en un solo lugar.
+# Se sobreescriben por target, por línea de comandos (`--var clave=valor`) o por
+# entorno (`BUNDLE_VAR_clave=valor`).
+# -----------------------------------------------------------------------------
+variables:
+  catalog:
+    description: Catálogo de Unity Catalog donde vive la demo. Necesitas CREATE SCHEMA sobre él.
+    default: main
+
+  schema:
+    description: Esquema dentro del catálogo. Todas las tablas de la demo viven acá.
+    default: ditcher_neira
+
+  warehouse_id:
+    description: >-
+      SQL Warehouse serverless que consulta el app. `instalar.sh` lo descubre solo
+      si no se pasa; para fijarlo, `--var warehouse_id=<id>`.
+    default: ""
+
+  cliente:
+    description: >-
+      Fabricante que contrata el estudio. Todas las métricas de "nuestro"
+      desempeño se filtran por él y el resto del catálogo es competencia.
+    default: Nestlé
+
+  job_prefix:
+    description: >-
+      Prefijo de los jobs. El botón "Iniciar demo" del app los localiza por acá,
+      así que tiene que coincidir con la variable de entorno JOB_PREFIX del app.
+    default: DNCentro
+
+  app_name:
+    description: Nombre del Databricks App. Debe ser único en el workspace.
+    default: dn-centro-inteligencia
+
+  llm_endpoint:
+    description: >-
+      Foundation Model que usan los agentes. Vacío = los agentes caen a sus
+      plantillas deterministas, sin costo de inferencia.
+    default: databricks-meta-llama-3-3-70b-instruct
+
+  dashboard_id:
+    description: >-
+      Dashboard AI/BI que embebe el app. Lo llena `instalar.sh` después de
+      crearlo. Vacío = la pestaña del dashboard queda oculta.
+    default: ""
+
+  genie_space_id:
+    description: >-
+      Sala de Genie real. Vacío = el app usa el modo demostración con preguntas y
+      respuestas precargadas. Ver docs/GENIE.md.
+    default: ""
+
+  # --- Lakebase (copiloto de campo) ------------------------------------------
+  # Apagado por defecto porque una instancia de Postgres cuesta aunque nadie la
+  # consulte. Ver docs/LAKEBASE.md para encenderlo.
+  lakebase_host:
+    description: Host del endpoint de Lakebase. Vacío = pestaña de campo deshabilitada.
+    default: ""
+  lakebase_instance:
+    description: >-
+      Nombre corto de la instancia, para adjuntarla al app como recurso. Con esto
+      definido, Databricks le crea al service principal su rol de Postgres.
+    default: ""
+  lakebase_db:
+    description: Base de datos dentro de la instancia.
+    default: dncentro
+
+# -----------------------------------------------------------------------------
+# Qué se sube al workspace. Lo que no sirve en runtime se queda afuera: el
+# frontend se despliega compilado (`frontend/dist`), así que sus fuentes y sus
+# dependencias no tienen para qué viajar.
+# -----------------------------------------------------------------------------
+sync:
+  exclude:
+    - "**/node_modules"
+    - "**/.venv"
+    - "**/__pycache__"
+    - "**/*.tsbuildinfo"
+    - "**/.DS_Store"
+    - "src/app/frontend/src"
+    - "src/app/frontend/public"
+
+targets:
+  # El target normal: una instalación por usuario, aislada bajo su carpeta.
+  demo:
+    default: true
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+  # Target desechable para probar el instalador sin tocar la instalación real.
+  # Todo cambia de nombre, así que puede convivir con `demo` en el mismo
+  # workspace y `databricks bundle destroy -t pruebas` lo borra completo.
+  pruebas:
+    workspace:
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      schema: dn_pruebas
+      app_name: dn-pruebas
+      job_prefix: DNPruebas

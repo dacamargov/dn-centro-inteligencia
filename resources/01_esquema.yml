@@ -1,0 +1,88 @@
+# =============================================================================
+# Esquema de Unity Catalog + el job que aplica el modelo de datos y lo siembra
+# =============================================================================
+# El esquema es un recurso del bundle: se crea al desplegar y se borra al
+# desinstalar. Las tablas no pueden serlo (el bundle no maneja tablas Delta), así
+# que las crea el job `instalar` leyendo `src/esquema/uc_schema.sql`.
+#
+# Ese job es la única cosa que hay que correr después de desplegar, y `instalar.sh`
+# ya lo corre por ti.
+
+resources:
+  schemas:
+    # La clave del recurso es única en todo el bundle, no solo entre esquemas: el
+    # app se llama `centro_inteligencia` en resources/04_app.yml.
+    esquema_centro:
+      catalog_name: ${var.catalog}
+      name: ${var.schema}
+      comment: >-
+        dichter & neira · Centro de Inteligencia — medición continua de ejecución
+        en punto de venta para marcas de consumo masivo en LATAM. Datos
+        sintéticos: ninguna cifra proviene de una fuente real.
+
+  jobs:
+    instalar:
+      name: "${var.job_prefix} instalar — esquema y semilla"
+      # Sin `schedule`: corre a demanda, una vez por instalación.
+      # `databricks bundle run instalar` lo vuelve a correr cuando haga falta;
+      # todas sus tareas son idempotentes.
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        # 1) El modelo de datos. Todo lo demás depende de que las tablas existan.
+        - task_key: esquema
+          notebook_task:
+            notebook_path: ../src/esquema/aplicar_esquema.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              ddl_path: ${workspace.file_path}/src/esquema/uc_schema.sql
+          environment_key: default
+
+        # 2) El universo medido: países, fabricantes, SKUs, PDV y metas. Reescribe
+        #    las tablas maestras completas, así que es seguro re-ejecutarlo.
+        - task_key: maestros
+          depends_on:
+            - task_key: esquema
+          notebook_task:
+            notebook_path: ../src/datos/01_seed_maestros.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+          environment_key: default
+
+        # 3) Un primer pulso de cada generador, para que el tablero no abra vacío.
+        #    Son los mismos notebooks que después corren agendados cada minuto:
+        #    esto es exactamente un tick, disparado a mano.
+        - task_key: primer_pulso_visitas
+          depends_on:
+            - task_key: maestros
+          notebook_task:
+            notebook_path: ../src/datos/02_visitas_generator.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+          environment_key: default
+
+        - task_key: primer_pulso_precios
+          depends_on:
+            - task_key: maestros
+          notebook_task:
+            notebook_path: ../src/datos/03_precios_competencia.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+          environment_key: default
+
+        - task_key: primer_pulso_social
+          depends_on:
+            - task_key: maestros
+          notebook_task:
+            notebook_path: ../src/datos/04_social_generator.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+          environment_key: default

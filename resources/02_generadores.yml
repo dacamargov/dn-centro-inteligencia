@@ -1,0 +1,84 @@
+# =============================================================================
+# Generadores de datos — el latido de la operación
+# =============================================================================
+# Tres jobs agendados que simulan las fuentes que en producción serían sistemas
+# distintos: el reconocimiento de imagen del auditor en el anaquel, la captura de
+# precios en cadena y la escucha social.
+#
+# Nacen PAUSADOS. Los enciende el botón "Iniciar demo" del app o `./encender.sh`.
+# El nombre importa: el app clasifica un job como generador porque su nombre
+# contiene "datagen", y lo reconoce como suyo por el prefijo.
+
+resources:
+  jobs:
+    datagen_visitas:
+      name: "${var.job_prefix} datagen — visitas"
+      description: >-
+        Cada tick audita el planograma completo de una categoría en un PDV: una
+        observación por SKU, como devuelve una foto de anaquel. Refresca
+        `ejecucion_realtime` y poda lo que salió de la ventana de retención.
+      schedule:
+        quartz_cron_expression: "0 * * * * ?"
+        timezone_id: America/Panama
+        pause_status: PAUSED
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: main
+          notebook_task:
+            notebook_path: ../src/datos/02_visitas_generator.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+          environment_key: default
+
+    datagen_precios:
+      name: "${var.job_prefix} datagen — precios"
+      description: >-
+        Fotografía del precio observado de cada SKU por cadena y país, con el
+        índice de precio contra el promedio de su categoría en ese mismo anaquel.
+        Reemplaza la tabla completa en cada tick: es un estado, no una serie.
+      schedule:
+        quartz_cron_expression: "0 */5 * * * ?"
+        timezone_id: America/Panama
+        pause_status: PAUSED
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: main
+          notebook_task:
+            notebook_path: ../src/datos/03_precios_competencia.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+          environment_key: default
+
+    datagen_social:
+      name: "${var.job_prefix} datagen — social"
+      description: >-
+        Menciones a las marcas bajo medición, clasificadas por sentimiento y con
+        picos virales ocasionales. En producción esta tabla la alimenta la API de
+        las plataformas y el sentimiento sale de un modelo de clasificación.
+      schedule:
+        quartz_cron_expression: "0 * * * * ?"
+        timezone_id: America/Panama
+        pause_status: PAUSED
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: main
+          notebook_task:
+            notebook_path: ../src/datos/04_social_generator.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+          environment_key: default

@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+.env.local
+*.egg-info/
+.pytest_cache/
+
+# Node / frontend
+node_modules/
+npm-debug.log*
+yarn-error.log
+.vite/
+*.tsbuildinfo
+# OJO: frontend/dist SÍ se commitea — es el artefacto que se despliega.
+
+# La configuración del app la declara el bundle (resources/04_app.yml). Un
+# app.yaml local solo sirve para correrlo a mano y no debe viajar al repo.
+app.yaml
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Databricks
+.databricks/

@@ -1,0 +1,339 @@
+{
+  "_comment": "Respuestas preconfiguradas que usa el app cuando GENIE_SPACE_ID está vacío (modo demostración). Generadas por infra/build_canned_genie.sh a partir del dato real de la demo. Para usar un Genie Space real, completa GENIE_SPACE_ID en config.env — ver INSTALL.md.",
+  "answers": [
+    {
+      "id": "disponibilidad_categoria",
+      "question": "¿Cuál es la disponibilidad en anaquel por categoría?",
+      "keywords": [
+        "disponibilidad",
+        "anaquel",
+        "categoria",
+        "categoría",
+        "stock",
+        "quiebre"
+      ],
+      "text": "La disponibilidad promedio va de 87.2% en Culinarios a 95.5% en Bebidas No Alcohólicas. Culinarios es la categoría con más riesgo de quiebre en la última media hora.",
+      "sql": "SELECT categoria,\n       ROUND(AVG(CASE WHEN es_cliente THEN CAST(en_stock AS INT) END) * 100, 1) AS disponibilidad_pct,\n       COUNT(*) AS observaciones\nFROM __FQ__.visitas\nWHERE visit_ts >= current_timestamp() - INTERVAL 30 MINUTES\nGROUP BY categoria\nORDER BY disponibilidad_pct",
+      "query_result": {
+        "columns": [
+          "categoria",
+          "disponibilidad_pct",
+          "observaciones"
+        ],
+        "rows": [
+          [
+            "Culinarios",
+            "87.2",
+            "924"
+          ],
+          [
+            "Confitería y Snacks",
+            "91.4",
+            "876"
+          ],
+          [
+            "Lácteos",
+            "94.3",
+            "1027"
+          ],
+          [
+            "Bebidas Calientes",
+            "94.7",
+            "825"
+          ],
+          [
+            "Bebidas No Alcohólicas",
+            "95.5",
+            "780"
+          ]
+        ],
+        "row_count": 5,
+        "truncated": false
+      }
+    },
+    {
+      "id": "peor_ejecucion_pdv",
+      "question": "¿Qué puntos de venta tienen la peor ejecución esta hora?",
+      "keywords": [
+        "peor",
+        "ejecucion",
+        "ejecución",
+        "punto de venta",
+        "pdv",
+        "tienda",
+        "tiendas"
+      ],
+      "text": "El PDV más débil es Tienda de barrio Ciudad de Guatemala #24 (Independiente, Ciudad de Guatemala) con 50.0% de ejecución perfecta. Los cinco de la lista están todos por debajo de 61.5%.",
+      "sql": "SELECT t.nombre, t.cadena, t.ciudad, t.country_code,\n       ROUND(AVG(CASE WHEN v.es_cliente THEN CAST(v.ejecucion_perfecta AS INT) END) * 100, 1) AS ejecucion_pct\nFROM __FQ__.visitas v\nJOIN __FQ__.tiendas t ON t.store_id = v.store_id\nWHERE v.visit_ts >= current_timestamp() - INTERVAL 60 MINUTES\nGROUP BY t.nombre, t.cadena, t.ciudad, t.country_code\nHAVING COUNT(*) >= 20\nORDER BY ejecucion_pct\nLIMIT 5",
+      "query_result": {
+        "columns": [
+          "nombre",
+          "cadena",
+          "ciudad",
+          "country_code",
+          "ejecucion_pct"
+        ],
+        "rows": [
+          [
+            "Tienda de barrio Ciudad de Guatemala #24",
+            "Independiente",
+            "Ciudad de Guatemala",
+            "GT",
+            "50.0"
+          ],
+          [
+            "Pulpería León #84",
+            "Independiente",
+            "León",
+            "NI",
+            "58.3"
+          ],
+          [
+            "Supermaxi Quito #119",
+            "Supermaxi",
+            "Quito",
+            "EC",
+            "61.1"
+          ],
+          [
+            "Bodega Trujillo #138",
+            "Independiente",
+            "Trujillo",
+            "PE",
+            "61.1"
+          ],
+          [
+            "Pulpería Alajuela #39",
+            "Independiente",
+            "Alajuela",
+            "CR",
+            "61.5"
+          ]
+        ],
+        "row_count": 5,
+        "truncated": false
+      }
+    },
+    {
+      "id": "sos_por_pais",
+      "question": "¿Cuál es el share of shelf de nuestras marcas por país?",
+      "keywords": [
+        "share of shelf",
+        "sos",
+        "espacio",
+        "anaquel",
+        "pais",
+        "país",
+        "facings"
+      ],
+      "text": "Perú lidera con 31.8% de share of shelf y Honduras cierra con 26.2%. La brecha entre el mejor y el peor mercado es de 5.6 puntos.",
+      "sql": "SELECT p.pais,\n       ROUND(SUM(CASE WHEN v.es_cliente THEN v.facings ELSE 0 END)\n             / NULLIF(SUM(v.facings), 0) * 100, 1) AS sos_pct\nFROM __FQ__.visitas v\nJOIN __FQ__.paises p ON p.country_code = v.country_code\nWHERE v.visit_ts >= current_timestamp() - INTERVAL 30 MINUTES\nGROUP BY p.pais\nORDER BY sos_pct DESC",
+      "query_result": {
+        "columns": [
+          "pais",
+          "sos_pct"
+        ],
+        "rows": [
+          [
+            "Perú",
+            "31.8"
+          ],
+          [
+            "Ecuador",
+            "30.9"
+          ],
+          [
+            "Costa Rica",
+            "30.6"
+          ],
+          [
+            "Colombia",
+            "30.1"
+          ],
+          [
+            "El Salvador",
+            "29.8"
+          ],
+          [
+            "Nicaragua",
+            "29.4"
+          ],
+          [
+            "Guatemala",
+            "29.4"
+          ],
+          [
+            "República Dominicana",
+            "27.8"
+          ],
+          [
+            "Panamá",
+            "27.2"
+          ],
+          [
+            "Honduras",
+            "26.2"
+          ]
+        ],
+        "row_count": 10,
+        "truncated": false
+      }
+    },
+    {
+      "id": "skus_agotados",
+      "question": "¿Qué SKUs están agotados en más puntos de venta?",
+      "keywords": [
+        "sku",
+        "agotado",
+        "agotados",
+        "quiebre",
+        "faltante",
+        "out of stock"
+      ],
+      "text": "Maggi Caldo de Pollo (Maggi) es el peor caso: agotado en 14 puntos de venta, con 83.3% de disponibilidad. Los cinco SKUs de la lista concentran la mayor parte de los quiebres del período.",
+      "sql": "SELECT v.sku, pr.nombre AS producto, pr.marca,\n       COUNT(DISTINCT CASE WHEN NOT v.en_stock THEN v.store_id END) AS pdv_agotado,\n       ROUND(AVG(CAST(v.en_stock AS INT)) * 100, 1) AS disponibilidad_pct\nFROM __FQ__.visitas v\nJOIN __FQ__.productos pr ON pr.sku = v.sku\nWHERE v.visit_ts >= current_timestamp() - INTERVAL 30 MINUTES\n  AND v.es_cliente\nGROUP BY v.sku, pr.nombre, pr.marca\nORDER BY pdv_agotado DESC\nLIMIT 5",
+      "query_result": {
+        "columns": [
+          "sku",
+          "producto",
+          "marca",
+          "pdv_agotado",
+          "disponibilidad_pct"
+        ],
+        "rows": [
+          [
+            "SKU-0025",
+            "Maggi Caldo de Pollo",
+            "Maggi",
+            "14",
+            "83.3"
+          ],
+          [
+            "SKU-0036",
+            "Nestlé Crunch",
+            "Crunch",
+            "11",
+            "84.9"
+          ],
+          [
+            "SKU-0027",
+            "Maggi Sazonador Completo",
+            "Maggi",
+            "11",
+            "85.7"
+          ],
+          [
+            "SKU-0032",
+            "Maggi Salsa de Tomate",
+            "Maggi",
+            "11",
+            "86.9"
+          ],
+          [
+            "SKU-0041",
+            "Galletas Nestlé Surtidas",
+            "Nestlé",
+            "7",
+            "89.0"
+          ]
+        ],
+        "row_count": 5,
+        "truncated": false
+      }
+    },
+    {
+      "id": "indice_precio_cadena",
+      "question": "¿Cómo se compara nuestro índice de precio con la competencia por cadena?",
+      "keywords": [
+        "precio",
+        "indice",
+        "índice",
+        "cadena",
+        "competencia",
+        "caro",
+        "barato"
+      ],
+      "text": "En Mi Comisariato estamos en índice 109.4 contra 94.9 de la competencia: es la cadena donde más pesa el sobreprecio. La más equilibrada de la lista es Nacional con índice 108.0.",
+      "sql": "SELECT cadena,\n       ROUND(AVG(CASE WHEN es_cliente THEN indice_precio END), 1) AS indice_nuestro,\n       ROUND(AVG(CASE WHEN NOT es_cliente THEN indice_precio END), 1) AS indice_rival\nFROM __FQ__.precios_competencia\nGROUP BY cadena\nORDER BY indice_nuestro DESC\nLIMIT 6",
+      "query_result": {
+        "columns": [
+          "cadena",
+          "indice_nuestro",
+          "indice_rival"
+        ],
+        "rows": [
+          [
+            "Mi Comisariato",
+            "109.4",
+            "94.9"
+          ],
+          [
+            "Tía",
+            "108.6",
+            "95.3"
+          ],
+          [
+            "La Torre",
+            "108.3",
+            "95.5"
+          ],
+          [
+            "Jumbo",
+            "108.2",
+            "95.6"
+          ],
+          [
+            "La Unión",
+            "108.2",
+            "95.6"
+          ],
+          [
+            "Nacional",
+            "108.0",
+            "95.7"
+          ]
+        ],
+        "row_count": 6,
+        "truncated": false
+      }
+    },
+    {
+      "id": "moderno_vs_tradicional",
+      "question": "¿Qué diferencia hay en ejecución entre canal moderno y tradicional?",
+      "keywords": [
+        "canal",
+        "moderno",
+        "tradicional",
+        "diferencia",
+        "brecha",
+        "comparar"
+      ],
+      "text": "Moderno ejecuta 83.1% contra 74.3% de Tradicional: 8.8 puntos de brecha. El canal más débil también arrastra la disponibilidad, en 89.9%.",
+      "sql": "SELECT t.canal,\n       ROUND(AVG(CASE WHEN v.es_cliente THEN CAST(v.en_stock AS INT) END) * 100, 1) AS disponibilidad_pct,\n       ROUND(AVG(CASE WHEN v.es_cliente THEN CAST(v.ejecucion_perfecta AS INT) END) * 100, 1) AS ejecucion_pct,\n       COUNT(DISTINCT v.store_id) AS pdv\nFROM __FQ__.visitas v\nJOIN __FQ__.tiendas t ON t.store_id = v.store_id\nWHERE v.visit_ts >= current_timestamp() - INTERVAL 30 MINUTES\nGROUP BY t.canal\nORDER BY ejecucion_pct DESC",
+      "query_result": {
+        "columns": [
+          "canal",
+          "disponibilidad_pct",
+          "ejecucion_pct",
+          "pdv"
+        ],
+        "rows": [
+          [
+            "Moderno",
+            "93.7",
+            "83.1",
+            "86"
+          ],
+          [
+            "Tradicional",
+            "89.9",
+            "74.3",
+            "46"
+          ]
+        ],
+        "row_count": 2,
+        "truncated": false
+      }
+    }
+  ]
+}

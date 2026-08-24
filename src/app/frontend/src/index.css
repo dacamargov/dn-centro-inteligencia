@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  background-color: #EDF3F9;
+  color: #14263B;
+}
+
+/* Barra de scroll discreta, en los azules de la marca */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #EDF3F9; }
+::-webkit-scrollbar-thumb { background: #C3D4E4; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #0D5CAB; }
+
+/* Números tabulares para los KPI: sin esto, las cifras bailan al actualizarse */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rutas de campo en el mapa — el trazo animado se controla desde React
+   (dashArray + dashOffset vía Leaflet); aquí solo el resplandor. */
+path.ruta-campo {
+  filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 12px currentColor);
+}
+
+/* Barrido de luz al cambiar de estado: hace visible una mejora sin texto */
+@keyframes status-sweep {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 0.9; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+.status-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    transparent 35%,
+    rgba(13, 92, 171, 0.14) 50%,
+    transparent 65%,
+    transparent 100%
+  );
+  animation: status-sweep 1.6s ease-out 1;
+  will-change: transform;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 currentColor; }
+  50%      { box-shadow: 0 0 22px -2px currentColor; }
+}
+.badge-pulse {
+  animation: badge-pulse 1.4s ease-in-out infinite;
+}
