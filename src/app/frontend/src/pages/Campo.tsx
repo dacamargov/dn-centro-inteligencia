@@ -161,18 +161,21 @@ export default function Campo() {
           <Database className="w-3.5 h-3.5" /> Copiloto de campo · Lakebase
         </div>
         <h1 className="text-2xl font-semibold text-tinta mb-3">
-          Lakebase no está configurado
+          Lakebase no está configurado en este app
         </h1>
         <p className="text-grafito text-sm leading-relaxed">
-          Este módulo usa <strong>Lakebase (Postgres)</strong> para servirle al mercaderista, en
-          menos de 100 ms, el plan de acción del punto de venta que acaba de abrir en el celular.
-          Viene <strong>deshabilitado por defecto para no generar costos</strong> de base de datos.
+          El copiloto de campo usa <strong>Lakebase (Postgres)</strong> para servir el plan de la
+          visita en menos de 100 ms. Si ves este mensaje, el app se desplegó sin{' '}
+          <span className="font-mono text-dn-600">LAKEBASE_HOST</span> — suele pasar si se hizo un{' '}
+          <span className="font-mono text-dn-600">bundle deploy</span> manual sin las variables que
+          pasa <span className="font-mono text-dn-600">instalar.sh</span>.
         </p>
         <p className="text-grafito text-sm leading-relaxed mt-3">
-          Para activarlo, seguí{' '}
-          <span className="font-mono text-dn-600">docs/LAKEBASE.md</span> del repositorio: crea la
-          instancia y vuelve a instalar pasando el host, con{' '}
-          <span className="font-mono text-dn-600">./instalar.sh --var lakebase_host=…</span>
+          Vuelve a correr{' '}
+          <span className="font-mono text-dn-600">./instalar.sh</span> (es idempotente) o despliega
+          con{' '}
+          <span className="font-mono text-dn-600">--var lakebase_host=&lt;host de la instancia&gt;</span>.
+          Ver <span className="font-mono text-dn-600">docs/LAKEBASE.md</span>.
         </p>
         <p className="text-humo text-xs mt-6">
           Las demás pestañas funcionan normalmente sin Lakebase.

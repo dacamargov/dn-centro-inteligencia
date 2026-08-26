@@ -4,10 +4,10 @@ import { NavLink } from 'react-router-dom';
 const TABS = [
   { to: '/ejecucion', label: 'Ejecución',  Icon: Activity,      end: true, iconColor: 'text-dn-600' },
   { to: '/agentes',   label: 'Agentes',    Icon: Bot,                      iconColor: 'text-sky-600' },
+  { to: '/campo',     label: 'Copiloto de campo', Icon: Radar,             iconColor: 'text-teal-600' },
   { to: '/pdv',       label: 'Puntos de venta', Icon: Store,               iconColor: 'text-emerald-600' },
   { to: '/precios',   label: 'Precio',     Icon: Tag,                      iconColor: 'text-rose-600' },
   { to: '/marca',     label: 'Marca',      Icon: MessageCircle,            iconColor: 'text-violet-600' },
-  { to: '/campo',     label: 'Copiloto de campo', Icon: Radar,             iconColor: 'text-teal-600' },
 ];
 
 export default function TabNav() {
