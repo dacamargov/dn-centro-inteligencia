@@ -53,7 +53,7 @@ export default function DemoControl() {
   };
 
   const stop = async () => {
-    if (!window.confirm('¿Detener la demo? Se pausan los seis jobs.')) return;
+    if not window.confirm('¿Detener la demo? Se pausan los jobs de generadores y agentes.')) return;
     // Limpiar es la segunda pregunta a propósito. Borrar el dato deja las
     // gráficas en blanco durante varios minutos tras el siguiente arranque, y
     // eso no es lo que espera quien solo quiere pausar entre reuniones.

@@ -77,23 +77,55 @@ def _classify(name: str):
     return None
 
 
-def _discover():
-    """Return (datagen, agents) lists of {job_id, name, pause_status}."""
+def _row_from_job(j) -> dict | None:
+    s = j.settings
+    name = (s.name if s else "") or ""
+    if not _matches(name):
+        return None
+    kind = _classify(name)
+    if kind is None:
+        return None
+    pause = None
+    if s and s.schedule and s.schedule.pause_status:
+        pause = s.schedule.pause_status.value
+    return {"job_id": j.job_id, "name": name, "pause_status": pause, "kind": kind}
+
+
+def _dedupe_jobs(rows: list[dict]) -> list[dict]:
+    """Un job por nombre: el bundle puede dejar huérfanos con el mismo título.
+
+    Si hay dos copias del mismo job, el estado de la demo miente (una pausada y otra
+    activa) y Detener solo alcanza a la mitad. Nos quedamos con el job_id más alto,
+    que suele ser el del último deploy.
+    """
+    by_name: dict[str, dict] = {}
+    for row in rows:
+        name = row["name"]
+        prev = by_name.get(name)
+        if prev is None or row["job_id"] > prev["job_id"]:
+            by_name[name] = row
+    return list(by_name.values())
+
+
+def _discover_all() -> list[dict]:
+    """Todos los jobs datagen/agent del prefijo, incluidos duplicados huérfanos."""
     w = get_workspace_client()
-    datagen, agents = [], []
+    rows: list[dict] = []
     for j in w.jobs.list():
-        s = j.settings
-        name = (s.name if s else "") or ""
-        if not _matches(name):
-            continue
-        kind = _classify(name)
-        if kind is None:
-            continue
-        pause = None
-        if s and s.schedule and s.schedule.pause_status:
-            pause = s.schedule.pause_status.value
-        row = {"job_id": j.job_id, "name": name, "pause_status": pause}
-        (datagen if kind == "datagen" else agents).append(row)
+        row = _row_from_job(j)
+        if row:
+            rows.append(row)
+    return rows
+
+
+def _discover():
+    """Return (datagen, agents) deduped lists of {job_id, name, pause_status}."""
+    all_rows = _discover_all()
+    deduped = _dedupe_jobs(all_rows)
+    datagen, agents = [], []
+    for row in deduped:
+        entry = {k: row[k] for k in ("job_id", "name", "pause_status")}
+        (datagen if row["kind"] == "datagen" else agents).append(entry)
     return datagen, agents
 
 
@@ -116,6 +148,14 @@ def _set_pause(w, job_id: int, unpaused: bool) -> bool:
         ),
     )
     return True
+
+
+def _cancel_active_runs(w, job_id: int) -> None:
+    """Corta corridas en vuelo; pausar la agenda no cancela lo que ya arrancó."""
+    try:
+        w.jobs.cancel_all_runs(job_id=job_id)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("cancel_all_runs job %s: %s", job_id, exc)
 
 
 @router.get("/api/demo/status")
@@ -388,15 +428,19 @@ def demo_stop(wipe: bool = True):
     y conservar los datos."""
     w = get_workspace_client()
     try:
-        datagen, agents = _discover()
+        todos = _discover_all()
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"jobs list failed: {exc}") from exc
 
     paused, errors = [], []
-    for j in datagen + agents:
+    # Pausar TODAS las copias (huérfanas y actuales) y cancelar corridas en vuelo.
+    for j in todos:
         try:
+            _cancel_active_runs(w, j["job_id"])
             if _set_pause(w, j["job_id"], False):
                 paused.append(j["name"])
+            else:
+                errors.append(f"{j['name']}: sin agenda programada")
         except Exception as exc:  # noqa: BLE001
             errors.append(f"{j['name']}: {exc}")
 
