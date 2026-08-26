@@ -274,6 +274,29 @@ CREATE TABLE IF NOT EXISTS __SCHEMA__.campanas (
 USING DELTA
 COMMENT 'Campañas de amplificación lanzadas desde el centro de mando — transitoria';
 
+-- Promociones en góndola lanzadas desde el simulador de precio. Cada fila es un SKU
+-- en una cadena concreta: al activarla el SKU sale de la cola del simulador y queda
+-- trazable en el log de acciones.
+CREATE TABLE IF NOT EXISTS __SCHEMA__.promociones_gondola (
+    promo_id            STRING NOT NULL,
+    sku                 STRING NOT NULL,
+    producto            STRING,
+    marca               STRING,
+    categoria           STRING,
+    subcategoria        STRING,
+    country_code        STRING NOT NULL,
+    cadena              STRING NOT NULL,
+    descuento_pct       INT NOT NULL,
+    duracion            STRING NOT NULL,
+    precio_base_usd     DECIMAL(10,2) NOT NULL,
+    precio_gondola_usd  DECIMAL(10,2) NOT NULL,
+    estado              STRING NOT NULL,          -- activa / cerrada
+    lanzada_por         STRING,
+    lanzada_en          TIMESTAMP NOT NULL
+)
+USING DELTA
+COMMENT 'Promociones en góndola lanzadas desde Precio — transitoria';
+
 -- Traslados entre puntos de venta: el agente de red de abastecimiento cruza las
 -- tiendas en quiebre contra las que tienen sobrestock del mismo SKU y propone
 -- mover producto por la malla de distribución en lugar de esperar al siguiente

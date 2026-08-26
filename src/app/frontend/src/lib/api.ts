@@ -205,6 +205,24 @@ export type PrecioCadena = {
   skus_cliente: number;
 };
 
+export type PromocionGondola = {
+  promo_id: string;
+  sku: string;
+  producto: string | null;
+  marca: string | null;
+  categoria: string | null;
+  subcategoria: string | null;
+  country_code: string;
+  cadena: string;
+  descuento_pct: number;
+  duracion: string;
+  precio_base_usd: number;
+  precio_gondola_usd: number;
+  estado: string;
+  lanzada_por: string | null;
+  lanzada_en: string;
+};
+
 export type MetaCategoria = {
   categoria: string;
   observaciones: number;
@@ -738,6 +756,24 @@ export const api = {
     jsonFetch<PrecioCadena[]>(
       `/api/precios/por-cadena${categoria ? `?categoria=${encodeURIComponent(categoria)}` : ''}`,
     ),
+  promocionesGondola: (limit = 30) =>
+    jsonFetch<PromocionGondola[]>(`/api/precios/promociones?limit=${limit}`),
+  lanzarPromocionGondola: (body: {
+    sku: string;
+    cadena: string;
+    country_code: string;
+    descuento_pct: number;
+    duracion: string;
+    precio_base_usd: number;
+    producto?: string | null;
+    marca?: string | null;
+    categoria?: string | null;
+    subcategoria?: string | null;
+  }) =>
+    jsonFetch<PromocionGondola & { log_id: string }>('/api/precios/promociones', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 
   socialRecientes: (opts: { platform?: string; marca?: string; solo_cliente?: boolean; limit?: number } = {}) => {
     const p = new URLSearchParams();

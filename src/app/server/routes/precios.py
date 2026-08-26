@@ -7,12 +7,18 @@ polvo de 800 g contra un sobre de 60 g devuelve un índice enorme y vacío.
 
 100 = paridad. Por encima, el cliente está más caro que sus sustitutos.
 """
+from __future__ import annotations
+
+import json
+import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
+from pydantic import BaseModel, Field
 
-from ..config import FQ
-from ..uc import query
+from ..config import FQ, get_current_user_email
+from ..uc import execute, query
 
 router = APIRouter()
 
@@ -32,6 +38,57 @@ def _ultimo_snapshot() -> str:
           WHERE snapshot_ts = ultimo.ts
         )
     """
+
+
+def _excluir_promos_activas(alias: str = "c") -> str:
+    """SKUs con promoción activa no vuelven a la cola del simulador."""
+    return f"""
+        AND NOT EXISTS (
+          SELECT 1 FROM {FQ}.promociones_gondola pg
+          WHERE pg.sku = {alias}.sku
+            AND pg.estado = 'activa'
+        )
+    """
+
+
+_PROMO_COLS = """
+    promo_id, sku, producto, marca, categoria, subcategoria,
+    country_code, cadena, descuento_pct, duracion,
+    precio_base_usd, precio_gondola_usd, estado, lanzada_por, lanzada_en
+"""
+
+
+class LanzarPromocionBody(BaseModel):
+    sku: str = Field(..., min_length=1, max_length=80)
+    cadena: str = Field(..., min_length=1, max_length=120)
+    country_code: str = Field(..., min_length=2, max_length=8)
+    descuento_pct: int = Field(..., ge=5, le=50)
+    duracion: str = Field(..., min_length=3, max_length=40)
+    precio_base_usd: float = Field(..., gt=0)
+    producto: Optional[str] = None
+    marca: Optional[str] = None
+    categoria: Optional[str] = None
+    subcategoria: Optional[str] = None
+
+
+def _fila_promo(r: dict) -> dict:
+    return {
+        "promo_id": r["promo_id"],
+        "sku": r["sku"],
+        "producto": r.get("producto"),
+        "marca": r.get("marca"),
+        "categoria": r.get("categoria"),
+        "subcategoria": r.get("subcategoria"),
+        "country_code": r["country_code"],
+        "cadena": r["cadena"],
+        "descuento_pct": int(r["descuento_pct"]),
+        "duracion": r["duracion"],
+        "precio_base_usd": float(r["precio_base_usd"] or 0),
+        "precio_gondola_usd": float(r["precio_gondola_usd"] or 0),
+        "estado": r["estado"],
+        "lanzada_por": r.get("lanzada_por"),
+        "lanzada_en": r.get("lanzada_en"),
+    }
 
 
 @router.get("/api/precios/brechas")
@@ -54,6 +111,7 @@ def brechas(
           SELECT s.* FROM snap s
           WHERE s.es_cliente AND s.indice_precio >= {float(umbral)}
             {cat_filter}
+            {_excluir_promos_activas("s")}
         ),
         rival AS (
           -- El sustituto más barato en la misma plaza y subcategoría.
@@ -184,3 +242,114 @@ def por_cadena(categoria: Optional[str] = Query(None)):
         }
         for r in rows
     ]
+
+
+@router.get("/api/precios/promociones")
+def list_promociones(limit: int = Query(30, ge=1, le=100)):
+    """Promociones en góndola lanzadas desde el simulador — la más reciente primero."""
+    sql = f"""
+        SELECT {_PROMO_COLS}
+        FROM {FQ}.promociones_gondola
+        WHERE estado = 'activa'
+        ORDER BY lanzada_en DESC
+        LIMIT {int(limit)}
+    """
+    try:
+        rows = query(sql)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"UC query failed: {exc}") from exc
+    return [_fila_promo(r) for r in rows]
+
+
+@router.post("/api/precios/promociones")
+def lanzar_promocion(body: LanzarPromocionBody, request: Request):
+    """Activa una promoción en góndola: registra la fila, el log y saca el SKU de la cola."""
+    sku = body.sku.strip()
+    cadena = body.cadena.strip()
+    country = body.country_code.strip().upper()
+
+    ya = query(f"""
+        SELECT promo_id FROM {FQ}.promociones_gondola
+        WHERE sku = {_q(sku)} AND cadena = {_q(cadena)} AND country_code = {_q(country)}
+          AND estado = 'activa'
+        LIMIT 1
+    """)
+    if ya:
+        raise HTTPException(
+            status_code=409,
+            detail="Este SKU ya tiene una promoción activa en esa cadena.",
+        )
+
+    precio_gondola = round(body.precio_base_usd * (1 - body.descuento_pct / 100), 2)
+    promo_id = f"prm_{uuid.uuid4().hex[:12]}"
+    actor = get_current_user_email(request)
+    now_iso = datetime.now(timezone.utc).replace(tzinfo=None).isoformat(sep=" ")
+    log_id = f"act_{uuid.uuid4().hex[:14]}"
+
+    notas = {
+        "tipo": "promocion_gondola",
+        "promo_id": promo_id,
+        "sku": sku,
+        "cadena": cadena,
+        "country_code": country,
+        "descuento_pct": body.descuento_pct,
+        "duracion": body.duracion,
+        "precio_base_usd": body.precio_base_usd,
+        "precio_gondola_usd": precio_gondola,
+        "producto": body.producto,
+    }
+
+    try:
+        execute(f"""
+            INSERT INTO {FQ}.promociones_gondola VALUES (
+              {_q(promo_id)}, {_q(sku)}, {_q(body.producto or '')},
+              {_q(body.marca or '')}, {_q(body.categoria or '')}, {_q(body.subcategoria or '')},
+              {_q(country)}, {_q(cadena)},
+              {int(body.descuento_pct)}, {_q(body.duracion)},
+              CAST({body.precio_base_usd} AS DECIMAL(10,2)),
+              CAST({precio_gondola} AS DECIMAL(10,2)),
+              'activa', {_q(actor)}, '{now_iso}'
+            )
+        """)
+        execute(f"""
+            INSERT INTO {FQ}.action_log
+              (id, recommendation_id, action, actor, notes, occurred_at)
+            VALUES (
+              {_q(log_id)}, {_q(f"promo:{promo_id}")},
+              'ACTIVAR_PROMO', {_q(actor)},
+              {_q(json.dumps(notas, ensure_ascii=False))},
+              '{now_iso}'
+            )
+        """)
+        execute(f"""
+            UPDATE {FQ}.precios_competencia
+            SET en_promo = true
+            WHERE sku = {_q(sku)}
+              AND cadena = {_q(cadena)}
+              AND country_code = {_q(country)}
+              AND es_cliente = true
+              AND snapshot_ts = (
+                SELECT MAX(snapshot_ts) FROM {FQ}.precios_competencia
+              )
+        """)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"no se pudo lanzar la promoción: {exc}") from exc
+
+    return {
+        "promo_id": promo_id,
+        "log_id": log_id,
+        "sku": sku,
+        "producto": body.producto,
+        "marca": body.marca,
+        "categoria": body.categoria,
+        "subcategoria": body.subcategoria,
+        "country_code": country,
+        "cadena": cadena,
+        "descuento_pct": body.descuento_pct,
+        "duracion": body.duracion,
+        "precio_base_usd": body.precio_base_usd,
+        "precio_gondola_usd": precio_gondola,
+        "estado": "activa",
+        "lanzada_por": actor,
+        "lanzada_en": now_iso,
+    }

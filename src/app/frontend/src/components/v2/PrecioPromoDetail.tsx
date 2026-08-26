@@ -1,5 +1,5 @@
 import { Tag } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api, BrechaPrecio, PrecioCadena } from '../../lib/api';
 import { bandera, fmtDecimal, fmtPrecio } from '../../lib/format';
 import { peorPorSku } from '../../lib/precio';
@@ -8,6 +8,10 @@ import SkuPrecioCard from './SkuPrecioCard';
 export default function PrecioPromoDetail() {
   const [brechas, setBrechas] = useState<BrechaPrecio[]>([]);
   const [cadenas, setCadenas] = useState<PrecioCadena[]>([]);
+
+  const onPromoLanzada = useCallback((sku: string) => {
+    setBrechas((cur) => cur.filter((b) => b.sku !== sku));
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -46,7 +50,12 @@ export default function PrecioPromoDetail() {
       {simulables.length > 0 && (
         <section className="lg:col-span-3 space-y-3">
           {simulables.map((b, i) => (
-            <SkuPrecioCard key={`${b.sku}-${b.cadena}-${b.country_code}`} sku={b} rank={i + 1} />
+            <SkuPrecioCard
+              key={`${b.sku}-${b.cadena}-${b.country_code}`}
+              sku={b}
+              rank={i + 1}
+              onPromoLanzada={onPromoLanzada}
+            />
           ))}
         </section>
       )}

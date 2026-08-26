@@ -1,8 +1,9 @@
 import { Sparkles, Tag, TrendingDown, TrendingUp } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import AgenteEnContexto from '../components/v2/AgenteEnContexto';
+import PromocionesPanel from '../components/v2/PromocionesPanel';
 import SkuPrecioCard from '../components/v2/SkuPrecioCard';
-import { api, BrechaPrecio, PrecioCadena, PrecioCategoria } from '../lib/api';
+import { api, BrechaPrecio, PrecioCadena, PrecioCategoria, PromocionGondola } from '../lib/api';
 import { bandera, fmtDecimal } from '../lib/format';
 import { peorPorSku } from '../lib/precio';
 
@@ -25,24 +26,32 @@ function indiceColor(idx: number): string {
 
 export default function Precios() {
   const [brechas, setBrechas] = useState<BrechaPrecio[]>([]);
+  const [promociones, setPromociones] = useState<PromocionGondola[]>([]);
   const [porCategoria, setPorCategoria] = useState<PrecioCategoria[]>([]);
   const [porCadena, setPorCadena] = useState<PrecioCadena[]>([]);
   const [categoria, setCategoria] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const onPromoLanzada = useCallback((sku: string) => {
+    setBrechas((cur) => cur.filter((b) => b.sku !== sku));
+    api.promocionesGondola().then(setPromociones).catch(() => {});
+  }, []);
+
   useEffect(() => {
     let active = true;
     const tick = async () => {
       try {
-        const [b, c, ca] = await Promise.all([
+        const [b, c, ca, promos] = await Promise.all([
           api.brechasPrecio(categoria || undefined),
           api.preciosPorCategoria(),
           api.preciosPorCadena(categoria || undefined),
+          api.promocionesGondola(),
         ]);
         if (!active) return;
         setBrechas(b);
         setPorCategoria(c);
         setPorCadena(ca);
+        setPromociones(promos);
         setError(null);
       } catch (e: any) {
         if (active) setError(e?.message ?? String(e));
@@ -162,10 +171,13 @@ export default function Precios() {
               key={`${b.sku}-${b.cadena}-${b.country_code}`}
               sku={b}
               rank={i + 1}
+              onPromoLanzada={onPromoLanzada}
             />
           ))
         )}
       </section>
+
+      <PromocionesPanel promociones={promociones} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import AgentAlertToasts from './components/AgentAlertToasts';
+import ActionToasts from './components/ActionToasts';
 import GenieChatWidget from './components/GenieChatWidget';
 import Header from './components/Header';
 import TabNav from './components/TabNav';
@@ -57,6 +58,7 @@ export default function App() {
         </Routes>
       </main>
       {showToasts && <AgentAlertToasts />}
+      {showToasts && <ActionToasts />}
       {!isLanding && <GenieChatWidget />}
     </div>
   );

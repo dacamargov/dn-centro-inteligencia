@@ -2,7 +2,8 @@ import {
   AlertTriangle, ArrowRight, Check, ChevronDown, Megaphone, Sparkles, TrendingUp, X, Zap,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { BrechaPrecio } from '../../lib/api';
+import { api, BrechaPrecio } from '../../lib/api';
+import { pushActionToast } from '../../lib/actionToast';
 import { bandera, fmtDecimal, fmtPrecio } from '../../lib/format';
 
 // Supuestos del simulador. Son reglas de dedo de categoría, no un modelo
@@ -62,9 +63,10 @@ function Metrica({
 interface Props {
   sku: BrechaPrecio;
   rank: number;
+  onPromoLanzada?: (sku: string) => void;
 }
 
-export default function SkuPrecioCard({ sku, rank }: Props) {
+export default function SkuPrecioCard({ sku, rank, onPromoLanzada }: Props) {
   const P0 = sku.precio_usd;
   const Pr = sku.precio_rival_usd;
   const C = RATIO_COSTO * P0;
@@ -423,14 +425,28 @@ export default function SkuPrecioCard({ sku, rank }: Props) {
             <FormularioPromo
               precioBase={P0}
               onCancelar={() => setPromoAbierta(false)}
-              onConfirmar={(descuentoPct, duracion) => {
-                setTomada({
-                  tipo: 'promo',
-                  descuentoPct,
+              onConfirmar={async (descuentoPct, duracion) => {
+                const precioGondola = P0 * (1 - descuentoPct / 100);
+                const res = await api.lanzarPromocionGondola({
+                  sku: sku.sku,
+                  cadena: sku.cadena,
+                  country_code: sku.country_code,
+                  descuento_pct: descuentoPct,
                   duracion,
-                  precio: P0 * (1 - descuentoPct / 100),
+                  precio_base_usd: P0,
+                  producto: sku.producto,
+                  marca: sku.marca,
+                  categoria: sku.categoria,
+                  subcategoria: sku.subcategoria,
                 });
+                pushActionToast(
+                  'promo',
+                  'Promoción generada',
+                  `${sku.producto ?? sku.sku} · ${descuentoPct}% off · ${duracion} · góndola ${fmtPrecio(precioGondola)} · log ${res.log_id.slice(0, 12)}…`,
+                );
+                onPromoLanzada?.(sku.sku);
                 setPromoAbierta(false);
+                setAbierto(false);
               }}
             />
           ) : (
@@ -478,10 +494,12 @@ function FormularioPromo({
 }: {
   precioBase: number;
   onCancelar: () => void;
-  onConfirmar: (descuentoPct: number, duracion: string) => void;
+  onConfirmar: (descuentoPct: number, duracion: string) => Promise<void>;
 }) {
   const [descuento, setDescuento] = useState(15);
   const [duracion, setDuracion] = useState('2 semanas');
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   // La medición de anaquel es semanal, así que una promo de horas no se vería
   // en ningún ciclo. Las duraciones son las que negocia trade marketing.
   const duraciones = ['1 semana', '2 semanas', '1 mes', 'temporada'];
@@ -543,16 +561,34 @@ function FormularioPromo({
 
       <div className="flex items-center gap-2">
         <button
-          onClick={() => onConfirmar(descuento, duracion)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-dn-600 hover:bg-dn-700 text-white text-xs font-semibold"
+          disabled={enviando}
+          onClick={async () => {
+            setError(null);
+            setEnviando(true);
+            try {
+              await onConfirmar(descuento, duracion);
+            } catch (e: unknown) {
+              const msg = e instanceof Error ? e.message : String(e);
+              setError(msg);
+              pushActionToast('error', 'No se pudo lanzar la promoción', msg);
+            } finally {
+              setEnviando(false);
+            }
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-dn-600 hover:bg-dn-700 disabled:opacity-60 text-white text-xs font-semibold"
         >
           <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-          Lanzar promoción
+          {enviando ? 'Lanzando…' : 'Lanzar promoción'}
         </button>
-        <button onClick={onCancelar} className="text-humo hover:text-grafito text-xs">
+        <button
+          onClick={onCancelar}
+          disabled={enviando}
+          className="text-humo hover:text-grafito text-xs disabled:opacity-60"
+        >
           cancelar
         </button>
       </div>
+      {error && <div className="text-[11px] text-red-600">{error}</div>}
     </div>
   );
 }

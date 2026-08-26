@@ -51,6 +51,7 @@ TRANSIENT_TABLES: list[tuple[str, str | None, int]] = [
     ("action_log",           "occurred_at",      240),
     ("acciones_campo",       "created_at",       240),
     ("campanas",             "creada_en",        240),
+    ("promociones_gondola",  "lanzada_en",       240),
     # Una propuesta de traslado se apoya en una lectura de anaquel: pasada la
     # ventana no describe ninguna realidad y solo engorda la cola.
     ("traslados",            "propuesto_en",      60),
