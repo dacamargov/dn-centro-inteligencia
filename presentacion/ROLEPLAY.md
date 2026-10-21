@@ -173,6 +173,29 @@ repositorio. Con eso, les abro a preguntas."**
 > se marcan y se miden, no se cuelan; y las reglas duras descartan la fila. Para el
 > negocio eso significa que el KPI que ve en pantalla es defendible."**
 
+**"Si la plataforma solo sugiere y el humano aprueba, ¿cómo garantizas que las sugerencias del modelo son consistentes y confiables? ¿Qué validación tiene antes de mostrarle una recomendación al mercaderista?"**
+> **"Es la pregunta que yo querría que me hicieran, porque aquí la confianza está
+> diseñada, no es un acto de fe. Lo primero y más importante: el número que mueve la
+> decisión —qué tienda priorizar y cuánta venta está en juego— no lo inventa el modelo
+> de lenguaje; se calcula de forma determinística, con reglas claras, sobre el dato
+> auditado. El modelo no adivina cuánto dinero hay en riesgo; eso es aritmética sobre la
+> medición. Lo que el modelo aporta es ordenar y explicar, y aun eso pasa por filtros.
+> Antes de que una recomendación llegue al mercaderista, el dato cruza controles de
+> calidad en la entrada, así que una lectura corrupta o incompleta nunca alimenta una
+> sugerencia. El modelo de predicción se entrena y se evalúa contra datos que no vio, se
+> mide, y solo una versión que pasa esa evaluación se promueve a producción con una
+> etiqueta de 'campeón'; ninguna versión llega a la calle sin ese sello. En producción
+> seguimos vigilando que no se desvíe. Y la recomendación nunca es una caja negra: queda
+> registrada, con su linaje, así que siempre puedo rastrear de qué dato y de qué versión
+> salió. Por eso la misma situación produce la misma recomendación: la prioridad es
+> determinística, el modelo explica, y el humano aprueba. Tres capas, no una."**
+>
+> _[Si pide el "cómo": expectativas de calidad (@dlt.expect) en la ingesta; modelo
+> entrenado y evaluado con datos held-out, versionado en el UC Model Registry y
+> promovido solo vía alias 'campeón'; economía/priorización calculada en SQL
+> determinístico (el LLM solo ordena y redacta, no inventa el número); linaje de Unity
+> Catalog para auditar cada recomendación; y monitoreo de drift en producción.]_
+
 **"¿La arquitectura no son piezas pegadas?"**
 > **"Es un medallón bronce-plata-oro declarado como infraestructura-como-código, así
 > que es reproducible con un comando. Un solo catálogo gobierna dato, modelo y
