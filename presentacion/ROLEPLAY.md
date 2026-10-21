@@ -96,6 +96,20 @@ repositorio. Con eso, les abro a preguntas."**
 > frente a la competencia. Cuatro puntos de disponibilidad es dinero directo a su
 > categoría."**
 
+**"Si actuamos en minutos en vez de semanas, ¿cuánto de ese ocho por ciento realmente recuperamos?"**
+> **"Buena pregunta, y la respuesta honesta es que no recuperamos el ocho por ciento
+> completo: cuando el producto se agota, una parte de esa venta ya se perdió antes de
+> que alguien lo vea. Lo que cambia drásticamente es cuánto tiempo dura el anaquel
+> vacío. Hoy, con un ciclo de semanas, la tienda se queda sin producto varios días
+> entre que se detecta y se corrige, y esa es la venta que se escapa. Al actuar en la
+> propia visita ese tiempo colapsa a horas; y además el modelo anticipa el quiebre
+> antes de que ocurra, así que una parte ni siquiera llega a pasar. De forma
+> conservadora eso recorta el quiebre a la mitad —de ocho a alrededor de cuatro por
+> ciento, que son los cuatro puntos de disponibilidad que les mostré. Esa mitad es
+> exactamente la que modelamos como recuperable: en una red de cien millones de
+> dólares, del orden de cuatro millones al año. Y no se los pido de fe: el piloto de
+> sesenta días lo mide con su propio número, antes y después."**
+
 **"¿Cuánto tiempo necesito para ver el retorno?"**
 > **"Rápido, y por etapas. Lo que vieron ya corre, así que no hay meses de
 > construcción por delante: arrancamos un piloto de sesenta días en un país. Las
