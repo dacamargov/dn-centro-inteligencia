@@ -128,6 +128,20 @@ repositorio. Con eso, les abro a preguntas."**
 > piso de venta. Y si mañana quieren sumar el stock de trastienda del retailer, entra
 > por el mismo camino sin rehacer nada."**
 
+**"Si lo implemento hoy, ¿cuántos meses hasta que mi equipo esté funcional y esto produzca valor real? Entrenamiento, configuración, ajustes."**
+> **"La respuesta corta es: semanas para el primer valor, no meses para arrancar. Esto
+> no es un proyecto de instalar servidores ni de meses de montaje; la plataforma ya
+> está construida, y lo que hacemos al implementar es conectar su feed real de
+> auditorías y afinar los umbrales a su realidad. Con eso, un piloto en un país o un
+> grupo de tiendas ya está dando recomendaciones accionables en cuestión de semanas. El
+> entrenamiento del equipo es mínimo: la pantalla no le exige a nadie saber de datos ni
+> de tecnología, le dice al gerente qué tienda priorizar y qué hacer en la visita, así
+> que la curva es de una sesión, no de un curso. De ahí escalamos por olas —más países,
+> más tiendas— de forma progresiva, y en un trimestre tienen la operación completa de
+> los diez países corriendo. Pero lo importante es que no esperan el trimestre para ver
+> valor: desde el piloto, en las primeras semanas, ya están recuperando quiebres que
+> antes veían tarde."**
+
 ### 🟧 Si el operador de la plataforma dice…
 
 **"¿Cómo hacen que todos esos agentes respondan rápido?"**
