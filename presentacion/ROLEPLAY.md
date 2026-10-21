@@ -268,6 +268,30 @@ repositorio. Con eso, les abro a preguntas."**
 > operacional es la instancia más chica. El retorno está en millones contra un costo
 > de operación en miles; la relación no está cerca."**
 
+**"Si mañana mis datos crecen cincuenta por ciento, o tengo más tiendas o más SKUs, ¿cómo escala el costo? ¿Lineal, exponencial? ¿Y hay un cap, un máximo que pueda gastar por mes?"**
+> **"Buena pregunta de FinOps, y la respuesta corta es: lineal, no exponencial, y sí,
+> hay techo. Le explico por qué es lineal. El procesamiento es incremental: cuando sus
+> datos crecen cincuenta por ciento, el sistema solo procesa lo nuevo, no vuelve a
+> masticar todo desde cero cada noche. Entonces más tiendas o más SKUs mueven el costo
+> más o menos en proporción al volumen que agrega, no en saltos. De hecho, en varias
+> partes es sublineal: el almacenamiento es barato, la capa que le sirve las
+> predicciones al gerente casi no se mueve por tener más tiendas, porque son búsquedas
+> por clave, y los costos fijos se reparten entre más volumen. No hay ninguna pieza que
+> explote con la escala; no hay una sorpresa exponencial escondida. Segundo, el techo:
+> sí existe y usted lo controla. Como se paga por uso, puede fijar un presupuesto
+> mensual con alertas y con límites que frenan antes de pasarse, y el gasto queda
+> etiquetado por país y por proceso, así que no hay factura misteriosa a fin de mes: ve
+> exactamente dónde se consume. Y para cerrar con honestidad: el costo sí sigue al
+> volumen, pero eso es justo lo sano, porque el volumen que lo sube es el mismo que le
+> sube la venta recuperada; no paga por capacidad parada, paga por lo que efectivamente
+> usa, y usted le pone el máximo."**
+>
+> _[Si pide el "cómo": cómputo serverless pay-per-use; ingesta incremental con Auto
+> Loader (procesa solo lo nuevo, sin reprocesar el histórico); serving por clave en
+> Lakebase casi plano frente a más tiendas; budget policies con alertas y límites de
+> gasto + auto-stop de warehouses; atribución de costo por país/workload vía tags y
+> system tables de billing.]_
+
 **"Esos datos crudos de auditoría, ¿cómo llegan? ¿App móvil, cámaras, qué fuente?"**
 > **"En el mundo real la fuente es la app de campo en el celular del auditor: toma la
 > foto del anaquel y un reconocimiento de imagen lee cuántas caras tiene cada
