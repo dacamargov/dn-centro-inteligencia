@@ -157,6 +157,26 @@ repositorio. Con eso, les abro a preguntas."**
 > mostrar su propio número en un piloto de sesenta días, y ese es el mejor caso de
 > referencia que puede tener: el suyo."**
 
+**"Llevo esto a mi junta directiva. Van a preguntar cuál es mi riesgo. Si algo sale mal, si las recomendaciones son incorrectas y perdemos más dinero en vez de ganarlo, ¿cuál es la garantía que me das?"**
+> **"Lléveles esa pregunta a su junta, porque tiene buena respuesta. Primero, seamos
+> honestos: nadie serio le va a garantizar que un modelo nunca se equivoque. Lo que sí
+> le garantizo es que el riesgo está acotado por diseño, y se lo explico en los términos
+> de su junta. Uno: el sistema nunca actúa solo. Sugiere, y una persona aprueba; una
+> recomendación equivocada la filtra el mercaderista antes de hacer nada, no se ejecuta
+> a ciegas. Dos: pensemos cuál es realmente el peor caso de una recomendación mala. No
+> es perder capital; es haber priorizado una visita a una tienda que no era la más
+> urgente. La acción que el sistema propone es poner producto en el anaquel; eso no
+> quema dinero, en el peor de los casos es una visita menos óptima. Tres: el número que
+> prioriza no es una corazonada del modelo, es un cálculo sobre su propia auditoría, y
+> queda registrado, así que si algo sale raro se rastrea y se corrige, no se esconde. Y
+> cuatro, la garantía más importante para su junta: no les estoy pidiendo que apuesten
+> la operación. Les estoy proponiendo un piloto de sesenta días donde medimos la
+> disponibilidad antes y después con su propio dato; si no mueve el número, no
+> escalamos, y lo que se arriesgó fue el costo del piloto, no la compañía. Dicho eso,
+> voltee la pregunta: el riesgo más caro hoy no es implementar esto, es quedarse con el
+> ocho por ciento de quiebre que ya tiene y seguir viéndolo dos semanas tarde. Eso sí es
+> dinero que se pierde todos los días."**
+
 ### 🟧 Si el operador de la plataforma dice…
 
 **"¿Cómo hacen que todos esos agentes respondan rápido?"**
