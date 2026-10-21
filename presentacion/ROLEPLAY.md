@@ -96,7 +96,34 @@ repositorio. Con eso, les abro a preguntas."**
 > frente a la competencia. Cuatro puntos de disponibilidad es dinero directo a su
 > categoría."**
 
+**"¿Cuánto tiempo necesito para ver el retorno?"**
+> **"Rápido, y por etapas. Lo que vieron ya corre, así que no hay meses de
+> construcción por delante: arrancamos un piloto de sesenta días en un país. Las
+> primeras ganancias se ven en semanas, porque apenas el equipo empieza a visitar
+> primero las tiendas en riesgo, la disponibilidad en anaquel sube, y cada punto de
+> disponibilidad es venta recuperada casi de inmediato. A los sesenta días medimos la
+> disponibilidad antes y después, y ahí tienen el retorno demostrado con su propio
+> número, no con una proyección. Con ese impacto, la inversión se paga en el primer
+> trimestre; de ahí en adelante es ganancia."**
+
+**"¿Y cómo hacemos para saber el stock de todas las tiendas?"**
+> **"Lo sabemos de la propia auditoría, que es justo lo que Dichter & Neira ya hace:
+> en cada visita se registra, producto por producto, si está en el anaquel, cuántas
+> caras tiene y a qué precio. Esa lectura es el dato crudo que alimenta todo; no
+> dependemos de que el retailer nos abra su sistema de inventario, lo medimos en el
+> piso de venta. Y si mañana quieren sumar el stock de trastienda del retailer, entra
+> por el mismo camino sin rehacer nada."**
+
 ### 🟧 Si el operador de la plataforma dice…
+
+**"¿Cómo hacen que todos esos agentes respondan rápido?"**
+> **"La clave es que los agentes no corren cuando el mercaderista abre la app —ahí sí
+> se sentiría lento. Corren en segundo plano cada par de minutos, revisan los datos y
+> dejan las recomendaciones ya escritas en una tabla. Cuando el usuario abre la
+> pantalla solo lee algo que ya está calculado, por eso sale en milisegundos. El
+> razonamiento pesado lo hace el agente una vez, no en cada consulta; y la parte de
+> números la resuelve una consulta directa, el modelo solo elige cuál vale la pena
+> escalar."**
 
 **"¿Y la calidad del dato? La visión por imagen se equivoca."**
 > **"Es explícito: las lecturas de baja confianza —en mi corrida, un nueve por ciento—
