@@ -142,6 +142,21 @@ repositorio. Con eso, les abro a preguntas."**
 > valor: desde el piloto, en las primeras semanas, ya están recuperando quiebres que
 > antes veían tarde."**
 
+**"Si funciona tan bien, ¿por qué no lo veo ya en el mercado? ¿Qué otras marcas grandes lo usan, quién más confía en esto?"**
+> **"Es la pregunta correcta, y le doy la respuesta honesta. Lo que todavía no se ve en
+> todas partes no es la tecnología, es esta combinación aplicada al anaquel en tiempo
+> real. Las piezas de abajo no son experimentales: la plataforma de datos sobre la que
+> corre esto la usan miles de empresas grandes en producción, y la medición en el punto
+> de venta es justo lo que Dichter & Neira ya hace hoy para marcas líderes en diez
+> países. Lo nuevo —y por eso no está en el estante de todos sus competidores— es unir
+> esas dos cosas: tomar esa medición que ya existe y convertirla en una acción
+> priorizada que llega a la mano del gerente en el momento de la visita, no en un
+> reporte dos semanas después. La mayoría sigue usando esa medición como una foto para
+> mirar hacia atrás; usarla para decidir hacia adelante es donde está la ventaja, y hoy
+> el que la adopta primero es el que la captura. No le voy a vender logos; le voy a
+> mostrar su propio número en un piloto de sesenta días, y ese es el mejor caso de
+> referencia que puede tener: el suyo."**
+
 ### 🟧 Si el operador de la plataforma dice…
 
 **"¿Cómo hacen que todos esos agentes respondan rápido?"**
