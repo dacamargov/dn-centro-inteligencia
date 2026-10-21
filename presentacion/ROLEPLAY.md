@@ -177,6 +177,21 @@ repositorio. Con eso, les abro a preguntas."**
 > ocho por ciento de quiebre que ya tiene y seguir viéndolo dos semanas tarde. Eso sí es
 > dinero que se pierde todos los días."**
 
+**"Si todo sale bien en el piloto, ¿cuál es el siguiente paso? ¿Cómo pasamos de un país a los otros nueve, y cuál es el timeline?"**
+> **"Perfecto, ese es justo el camino que quiero recorrer con usted. Si el piloto mueve
+> el número, no arrancamos de cero en cada país, porque lo pesado ya está hecho: la
+> plataforma es una sola, y cada país nuevo es conectar su feed de auditoría y calibrar
+> los umbrales a su realidad, no volver a construir. Así que escalamos por olas.
+> Terminado el piloto, tomamos dos o tres países por ola; la primera ola toma unas pocas
+> semanas, porque el libreto quedó hecho en el piloto, y cada ola siguiente es más
+> rápida que la anterior porque ya está el camino andado. Con ese ritmo, pasar del
+> primer país a los diez completos es cosa de dos a tres trimestres, no de años. Y lo
+> importante para su bolsillo: no espera a tener los diez para ver retorno; cada país
+> empieza a recuperar quiebre apenas entra, así que el valor se va sumando ola tras ola
+> mientras escalamos, no al final. Le propongo que fijemos desde ya, junto con el
+> piloto, cuáles son los dos países de la siguiente ola, para arrancar con impulso en
+> cuanto tengamos el número."**
+
 ### 🟧 Si el operador de la plataforma dice…
 
 **"¿Cómo hacen que todos esos agentes respondan rápido?"**
