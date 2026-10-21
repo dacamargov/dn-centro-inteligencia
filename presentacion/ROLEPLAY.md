@@ -28,27 +28,30 @@ Responde a la altura de quien pregunta; cierra siempre con impacto de negocio.
 
 ---
 
-## Demo — en lenguaje de negocio _(3–4 min, Slide 3)_
+## Demo — leer este párrafo de corrido _(≈60 s, mostrando la pantalla, Slide 3)_
 
-> _[Habla de lo que el gerente VE y GANA. Cero jerga técnica. Un gerente de tienda
-> no sabe —ni le importa— qué es Lakeflow o un catálogo; le importa la venta.
-> Los nombres técnicos solo salen si el operador pregunta "¿cómo?" (abajo).]_
+> _[Léelo tal cual, en voz alta, mientras recorres el app. Es lenguaje de negocio:
+> cero jerga técnica. Los nombres técnicos solo salen si el operador pregunta "¿cómo
+> está hecho?" — ver la nota al final.]_
 
-1. "La **foto de la auditoría entra sola y se limpia**: lo que la cámara leyó mal se
-   marca aparte, así el número en el que confías es real."
-2. "Cada tienda tiene su **ficha**, y aparece **al instante** cuando el mercaderista
-   la abre en la visita."
-3. "El sistema **predice dónde se va a quebrar el producto antes de que pase**, y le
-   dice al mercaderista **exactamente qué corregir en ese anaquel**."
-4. "Así el equipo ataca primero las **34 tiendas críticas**, no las 140 por igual."
-5. "Y si quieres algo que no está en la pantalla, **le preguntas en español** —'¿cuáles
-   son mis 5 peores tiendas?'— y te responde al momento, sin pedirle nada a sistemas."
-6. "Todo esto en **una sola pantalla**, en vivo."
+**"Miren lo que ve el negocio en un solo lugar. La foto que toma el auditor en la
+tienda entra sola al sistema y se limpia: lo que la cámara leyó con poca certeza se
+aparta, así que el número en el que ustedes confían es real, no ruido. Con eso, cada
+punto de venta arma su propia ficha, y cuando el mercaderista llega a la tienda y la
+abre, aparece al instante. Pero no es solo una ficha: el sistema predice dónde se va a
+quebrar el producto antes de que pase, y le dice al mercaderista exactamente qué
+corregir en ese anaquel. Eso cambia la operación —en vez de recorrer las 140 tiendas
+por igual, el equipo ataca primero las 34 que están en riesgo real. Y si usted,
+gerente, quiere algo que no está en la pantalla, se lo pregunta en español, como le
+hablaría a una persona —'¿cuáles son mis cinco peores tiendas esta semana?'— y le
+responde al momento, sin tener que pedirle nada al área de sistemas. Todo esto es una
+sola pantalla, funcionando en vivo con los datos de hoy."**
 
-> **Traducción técnica — SOLO si el operador pregunta "¿cómo está hecho?"**
-> (1) Lakeflow con controles de calidad · (2+6) Unity Catalog gobierna todo y el app
-> lo expone · (3) perfil servido desde Lakebase en ~1 ms · (3-4) modelo de ML +
-> agentes de Gen AI · (5) Genie traduce la pregunta a SQL. _[Ver `evidence/`.]_
+> **Traducción técnica — SOLO si el operador pregunta "¿cómo está hecho?":**
+> la foto entra y se valida con **Lakeflow**; todo queda gobernado en **Unity
+> Catalog** y se expone en un **Databricks App**; la ficha se sirve desde **Lakebase**
+> en ~1 ms; la predicción es un **modelo de ML** y las acciones son **agentes de Gen
+> AI**; la pregunta en español la traduce a SQL **Genie**. _[Detalle en `evidence/`.]_
 
 ---
 
