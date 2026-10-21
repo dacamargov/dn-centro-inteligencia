@@ -111,6 +111,18 @@ Con eso, les abro a preguntas."**
 > el retorno medido con su propio número; con ese impacto, la inversión se paga en el
 > primer trimestre."**
 
+**"¿Cómo medirías y reportarías el ROI del piloto para que yo vea claro el impacto en disponibilidad, venta recuperada y margen?"**
+> **"En los tres números que a usted le importan, en una sola página, semanal. Uno,
+> disponibilidad: comparo el antes y el después en las mismas tiendas, en puntos. Dos,
+> venta recuperada: convierto esos puntos ganados a dinero sobre la venta de cada
+> categoría. Tres, margen: a esa venta le aplico el margen de la categoría y lo neteo
+> contra el costo del piloto; esa relación es su ROI. Para que el impacto sea atribuible
+> y no estacionalidad, dejo un grupo de tiendas de control sin el sistema y comparo
+> contra ellas: el lift es la diferencia. Al cierre de los sesenta días usted tiene la
+> foto clara —tantos puntos de disponibilidad, tanto en venta, tanto en margen, contra
+> lo que costó—, con su propio dato, no una proyección. Ese número es el que decide si
+> escalamos."**
+
 **"¿Y cómo hacemos para saber el stock de todas las tiendas?"**
 > **"De la propia auditoría: en cada visita se registra, producto por producto, si está
 > en el anaquel, cuántas caras tiene y a qué precio. No dependemos de que el retailer
