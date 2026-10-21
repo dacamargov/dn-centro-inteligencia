@@ -214,6 +214,24 @@ repositorio. Con eso, les abro a preguntas."**
 > sobre las recomendaciones. Si cerramos ese compromiso mutuo hoy, salimos del piloto
 > con el plan de escalamiento ya firmado, no empezando a discutirlo."**
 
+**"Antes de eso, necesito saber quién de mi equipo va a estar involucrado en el piloto. ¿Cuántas personas necesitas de mí, cuál es el compromiso de tiempo, y quién es mi punto de contacto de tu lado si algo falla?"**
+> **"Me encanta que bajemos a lo práctico, porque aquí la respuesta es tranquilizadora:
+> le pido poco, y nombrado. De su lado necesito tres personas, y ninguna a tiempo
+> completo. Una, un dueño de negocio —usted o quien designe— que tome las decisiones y
+> destrabe cuando haga falta; eso es un par de horas por semana, no más. Dos, un
+> contacto de datos o de sistemas que nos dé acceso al feed de auditoría; ese esfuerzo
+> se concentra al principio, para conectar la fuente, y después casi desaparece. Y tres,
+> un referente del equipo de campo que canalice lo que viven los mercaderistas. Y ojo
+> con esto último: los mercaderistas no cargan trabajo extra; siguen haciendo sus
+> visitas, solo que ahora guiadas, así que su compromiso de tiempo es cero adicional. El
+> peso del piloto lo lleva mi equipo, no el suyo: un arranque, un punto de control de
+> media hora por semana, y nosotros operando por detrás. Y lo que pidió al final, que es
+> clave: su punto de contacto de mi lado es una sola persona, un líder de solución con
+> nombre y apellido, que es su escalamiento directo si algo falla —no un conmutador ni
+> una cola de tickets—. Esa persona responde por el piloto, y detrás tiene al equipo
+> técnico y al soporte de la plataforma veinticuatro-siete para la infraestructura.
+> Usted tiene un número al que llamar, y ese número responde."**
+
 ### 🟧 Si el operador de la plataforma dice…
 
 **"¿Cómo hacen que todos esos agentes respondan rápido?"**
