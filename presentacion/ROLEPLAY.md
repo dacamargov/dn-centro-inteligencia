@@ -93,9 +93,11 @@ Con eso, les abro a preguntas."**
 > anaquel en el momento, no al día siguiente cuando ya se fue."**
 
 **"¿Qué gano yo en el número?"**
-> **"Recupera venta que hoy se pierde por quiebre y protege su espacio frente a la
-> competencia. Cuatro puntos de disponibilidad sobre su red son del orden de cuatro
-> millones al año, en sus categorías de mayor rotación."**
+> **"Dinero directo. Si una categoría vende diez millones al mes en esas tiendas,
+> recuperar cuatro puntos de disponibilidad son unos cuatrocientos mil en venta
+> recuperada; con un margen del treinta por ciento, cerca de ciento veinte mil de
+> ganancia al mes —y eso solo ya cubre el piloto—. Además protege su espacio frente a la
+> competencia."**
 
 **"Si actuamos en minutos en vez de semanas, ¿cuánto de ese ocho por ciento recuperamos?"**
 > **"No el ocho completo: cuando el producto se agota, parte de esa venta ya se perdió.
@@ -183,7 +185,9 @@ Con eso, les abro a preguntas."**
 > **"No corren cuando el usuario abre la app —ahí sí sería lento—. Corren en segundo
 > plano cada par de minutos y dejan las recomendaciones ya escritas en una tabla; la app
 > solo lee algo pre-calculado, por eso sale en milisegundos. Y la parte de números la
-> resuelve SQL determinista; el modelo solo elige cuál vale la pena escalar."**
+> resuelve SQL determinista; el modelo solo elige cuál vale la pena escalar. Para el
+> gerente: la recomendación ya está lista cuando el mercaderista entra a la tienda, cero
+> espera."**
 
 **"¿Y la calidad del dato? La visión por imagen se equivoca."**
 > **"Las lecturas de baja confianza —un nueve por ciento en mi corrida— se marcan y se
@@ -195,7 +199,8 @@ Con eso, les abro a preguntas."**
 > —aritmética sobre el dato auditado—, no lo inventa el modelo; el modelo solo ordena y
 > explica. El dato cruza controles de calidad antes de entrar, el modelo se evalúa
 > contra datos que no vio y solo una versión aprobada llega a producción, y cada
-> recomendación queda con su linaje. Misma situación, misma recomendación."**
+> recomendación queda con su linaje. Misma situación, misma recomendación. Para el
+> gerente: puede confiar en lo que ve sin ser experto en datos."**
 >
 > _[Si pide el "cómo": expectativas de calidad en la ingesta; modelo evaluado con
 > held-out y promovido vía alias 'campeón' en el UC Model Registry; economía en SQL
@@ -219,7 +224,8 @@ Con eso, les abro a preguntas."**
 > **"Lineal, no exponencial, y con techo. El procesamiento es incremental: solo se
 > procesa lo nuevo, no se reprocesa todo, así que el costo sigue al volumen en
 > proporción, no en saltos. Y usted fija un presupuesto mensual con alertas y límites que
-> frenan antes de pasarse, con el gasto etiquetado por país: sin factura sorpresa."**
+> frenan antes de pasarse, con el gasto etiquetado por país: sin factura sorpresa. Para
+> el gerente: el presupuesto es predecible y crece solo si crece la venta."**
 >
 > _[Si pide el "cómo": serverless pay-per-use; ingesta incremental con Auto Loader;
 > serving por clave casi plano frente a más tiendas; budget policies con alertas y
@@ -230,7 +236,8 @@ Con eso, les abro a preguntas."**
 > un reconocimiento de imagen lee cuántas caras tiene cada producto, el precio y si está
 > en stock, más lo que el auditor confirma. Cada lectura trae su nivel de confianza. El
 > punto de entrada es agnóstico a la fuente —app móvil, kiosco o feed del retailer por
-> API—: entra por el mismo lugar y el resto del flujo no cambia."**
+> API—: entra por el mismo lugar y el resto del flujo no cambia. Para el gerente: menos
+> dependencia de sistemas, conectar su feed no obliga a rehacer nada."**
 >
 > _[Si pide el "cómo": los archivos (NDJSON) caen en un Volume de Unity Catalog y Auto
 > Loader los ingiere incremental al pipeline. En la evidencia se ve el dispositivo real
@@ -258,7 +265,8 @@ Con eso, les abro a preguntas."**
 > tiendas, qué surtido, qué umbrales, se parametriza, no se reescribe. Una sola receta de
 > entrenamiento produce un modelo calibrado por país. Sí, cada país toma unas semanas de
 > puesta a punto, pero es configuración sobre un activo único: el mantenimiento sigue
-> siendo uno, no nueve."**
+> siendo uno, no nueve. Para el gerente: escala a los diez países sin multiplicar el
+> costo ni la espera."**
 >
 > _[Si pide el "cómo": modelo de datos canónico con mapeo por país como config; pipeline
 > de entrenamiento parametrizada (umbrales como config); Asset Bundles que estampan una
@@ -270,7 +278,8 @@ Con eso, les abro a preguntas."**
 > minutos, no de horas: la foto entra, se procesa de forma incremental y el modelo corre
 > en ciclos de un par de minutos. Los diez países no lo rompen: al ser incremental y
 > serverless, más volumen escala en paralelo y la latencia por lectura se mantiene
-> plana."**
+> plana. Para el gerente: nunca espera por la pantalla, decide en el momento de la
+> visita."**
 >
 > _[Si pide el "cómo": Auto Loader por micro-batch (trigger ajustable), pipeline y
 > scoring en serverless que autoescala, y serving por clave en Lakebase (~1 ms)
@@ -283,7 +292,8 @@ Con eso, les abro a preguntas."**
 > la ingesta tropiece, y el proceso se reintenta solo. Nuestro soporte es por niveles y
 > sigue al sol: las tres de la mañana en un país son horario de oficina en otro.
 > Compromiso concreto: incidente crítico, respuesta en quince minutos, y un líder de
-> solución con nombre como su escalamiento directo."**
+> solución con nombre como su escalamiento directo. Para el gerente: el equipo de campo
+> nunca se queda sin su recomendación, ni de madrugada."**
 >
 > _[Si pide el "cómo": SLA del proveedor + Databricks sobre serverless; serving
 > desacoplado; reintento automático de micro-batches; soporte L1/L2/L3 follow-the-sun
@@ -304,6 +314,8 @@ Con eso, les abro a preguntas."**
 
 ---
 
-_Recordatorios de entrega: lidera con el resultado y el dinero, deja el detalle técnico
-a Shreya, usa Tell–Show–Tell (anuncia, muestra, recapitula enlazando al negocio), y
+_Recordatorios de entrega: lidera con el resultado y el dinero (traduce siempre el
+beneficio a cifras concretas: venta recuperada y margen al mes), deja el detalle técnico
+a Shreya, cierra cada respuesta técnica con el beneficio para el gerente (menos visitas
+perdidas, decisiones más rápidas, menos dependencia de sistemas), usa Tell–Show–Tell, y
 maneja el pushback con un dato, no a la defensiva._
