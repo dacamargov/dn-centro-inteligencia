@@ -291,6 +291,36 @@ repositorio. Con eso, les abro a preguntas."**
 > corre idéntico en cualquier nube, y expectativas de calidad + monitoreo de drift del
 > modelo como red de seguridad.]_
 
+**"Asset bundles, infra como código, reproducible, bien. Pero sea honesto: eso funciona si todos los países tienen la misma estructura de datos, las mismas tiendas, los mismos proveedores. En retail no es así —Brasil no es México ni Colombia—. ¿Cómo adaptas el modelo sin terminar con nueve pilotos distintos en vez de uno escalado?"**
+> **"Me gusta que sea honesto, porque tiene toda la razón: en retail Brasil no es México
+> ni es Colombia, y si mi respuesta fuera 'el mismo modelo para todos', usted tendría
+> razón en desconfiar. Pero la trampa que describe —terminar con nueve pilotos— aparece
+> cuando lo que cambia entre países es el código. Aquí lo que cambia entre países no es
+> el código, es la configuración. Déjeme separar dos cosas. Una es el motor: la lógica
+> de medir disponibilidad, priorizar y recomendar es universal —una tienda es una tienda
+> y un quiebre es un quiebre en cualquier país—; eso es un solo sistema, compartido. La
+> otra es la realidad local: qué tiendas, qué surtido, qué proveedores, qué cuenta como
+> quiebre crítico en Brasil frente a Colombia. Eso no se reescribe, se parametriza: cada
+> país mapea su realidad sobre un mismo modelo de datos común, y sus umbrales son
+> valores de configuración, no programas distintos. El modelo no es ni una caja negra
+> global impuesta a todos, ni nueve modelos hechos a mano; es una sola receta de
+> entrenamiento que, con el dato de cada país, produce un modelo calibrado para ese
+> país. Adaptar es recalibrar con esa misma receta, no volver a construir. Por eso la
+> infraestructura-como-código es justamente lo que evita los nueve pilotos: estampo una
+> instancia gobernada por país desde la misma definición, con sus parámetros, y las
+> nueve heredan los mismos controles de calidad y seguridad; no vuelvo a probar que es
+> seguro nueve veces. Y siendo honesto en la otra dirección: sí, cada país tiene un
+> trabajo de puesta a punto —conectar su feed, mapear su taxonomía, afinar sus umbrales
+> y validar— y eso toma semanas; pero es trabajo de configuración sobre un activo
+> compartido, y el mantenimiento sigue siendo uno, no nueve."**
+>
+> _[Si pide el "cómo": modelo de datos canónico con mapeo por país a nivel de
+> configuración; una sola pipeline de entrenamiento parametrizada que produce un modelo
+> calibrado por país (umbrales como config, no código); Asset Bundles que estampan una
+> instancia gobernada por país desde la misma definición; gobierno central de Unity
+> Catalog heredado por todas; onboarding por país = semanas de configuración, no un
+> rebuild, con mantenimiento único.]_
+
 **"En producción, con diez países, ¿cuánto tarda el pipeline desde que la foto entra hasta que el gerente ve la predicción?"**
 > **"Primero separemos dos cosas que suelen confundirse. Una es qué tan rápido
 > responde la pantalla cuando el gerente la abre: eso es siempre instantáneo, un
