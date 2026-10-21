@@ -159,6 +159,24 @@ repositorio. Con eso, les abro a preguntas."**
 > operacional es la instancia más chica. El retorno está en millones contra un costo
 > de operación en miles; la relación no está cerca."**
 
+**"Esos datos crudos de auditoría, ¿cómo llegan? ¿App móvil, cámaras, qué fuente?"**
+> **"En el mundo real la fuente es la app de campo en el celular del auditor: toma la
+> foto del anaquel y un reconocimiento de imagen lee cuántas caras tiene cada
+> producto, el precio y si está en stock, más lo que el auditor confirma a mano. Cada
+> visita genera una lectura —un registro por tienda y por producto— con su marca de
+> tiempo, el dispositivo que la tomó y un nivel de confianza del reconocimiento. Esa
+> lectura aterriza como archivo en un volumen de almacenamiento gobernado, y el sistema
+> la toma de ahí de forma incremental apenas llega, sin que nadie dispare un proceso a
+> mano. Lo importante para la integración es que el punto de entrada es agnóstico a la
+> fuente: hoy en la demo un generador deja esos archivos, pero igual puede ser la app
+> móvil, un kiosco en tienda o un feed del retailer por API o cola; entra por el mismo
+> lugar y el resto del flujo no cambia. Y como cada lectura trae su confianza, lo que
+> la cámara leyó dudoso se marca en vez de ensuciar el número."**
+>
+> _[Si pide el "cómo" exacto: los archivos (NDJSON) caen en un Volume de Unity Catalog
+> y **Auto Loader** los ingiere incremental al pipeline de Lakeflow. En la evidencia se
+> ve el dispositivo real de cada lectura —SCAI-mobile, SCAI-kiosk— y su `confianza_ir`.]_
+
 **"¿Cómo integro mi feed real de auditorías?"**
 > **"Por el mismo punto de entrada. Cambiar el generador de datos por su feed real no
 > toca el resto: el procesamiento, el modelo, la pregunta en español y la app siguen
