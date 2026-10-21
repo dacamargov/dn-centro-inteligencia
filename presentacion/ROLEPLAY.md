@@ -192,6 +192,28 @@ repositorio. Con eso, les abro a preguntas."**
 > piloto, cuáles son los dos países de la siguiente ola, para arrancar con impulso en
 > cuanto tengamos el número."**
 
+**"Si arrancamos en sesenta días con un país y vemos el retorno, ¿cuál es el compromiso que necesito de ustedes para escalar a los otros nueve? ¿Qué recursos dedican, cuál es el costo, y cuál es mi timeline real?"**
+> **"Me gusta que hablemos de compromiso, porque esto es una sociedad, no un 'se lo
+> entrego y me voy'. Le respondo las tres cosas de frente. Primero, los recursos que
+> ponemos nosotros: un equipo dedicado que acompaña cada ola —ingeniería de datos y de
+> plataforma, ciencia de datos y un líder de solución— que se sienta con su gente a
+> conectar el feed, calibrar los umbrales y validar el número país por país; no es
+> dejarle un software y desearle suerte. Segundo, el costo, y quiero ser transparente:
+> tiene dos partes. Una es la plataforma, que se paga por lo que se usa y escala con el
+> volumen, así que no paga por capacidad ociosa; la otra es el esfuerzo de puesta a
+> punto por país, que es acotado y baja ola tras ola porque reutilizamos el libreto. No
+> le voy a tirar un número al aire hoy: justamente el piloto de sesenta días nos deja el
+> costo por país y el costo por punto de disponibilidad recuperado, y acordamos el
+> presupuesto de cada ola con esos números reales en la mano, no con una proyección. Y
+> lo importante: ese costo se dimensiona contra la venta que recupera, no en el vacío.
+> Tercero, su timeline real, sin adornos: sesenta días el piloto; si mueve el número,
+> olas de dos o tres países; los diez completos en dos a tres trimestres, con la
+> honestidad de que cada país suma unas semanas de configuración. A cambio, lo que
+> necesito de usted es igual de concreto: acceso al feed de auditoría de cada país, un
+> dueño de negocio que empuje del lado suyo, y el equipo de campo listo para actuar
+> sobre las recomendaciones. Si cerramos ese compromiso mutuo hoy, salimos del piloto
+> con el plan de escalamiento ya firmado, no empezando a discutirlo."**
+
 ### 🟧 Si el operador de la plataforma dice…
 
 **"¿Cómo hacen que todos esos agentes respondan rápido?"**
