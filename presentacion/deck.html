@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Centro de Inteligencia D&N</title>
+<style>
+  @page { size: 1280px 720px; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: #1b1b1f; }
+  .slide { width: 1280px; height: 720px; padding: 64px 80px; page-break-after: always;
+           position: relative; display: flex; flex-direction: column; }
+  .slide:last-child { page-break-after: auto; }
+  .kicker { color: #ff3621; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: 15px; }
+  h1 { font-size: 58px; line-height: 1.05; margin: 14px 0 10px; font-weight: 800; }
+  h2 { font-size: 40px; margin: 6px 0 22px; font-weight: 800; }
+  .lead { font-size: 26px; line-height: 1.4; color: #33333a; max-width: 1000px; }
+  .big { font-size: 30px; line-height: 1.45; }
+  .note { font-size: 15px; color: #8a8a93; margin-top: auto; }
+  .cover { background: linear-gradient(135deg,#0b0b0f 0%, #2a1512 55%, #ff3621 160%); color:#fff; }
+  .cover .lead { color:#f0f0f2; }
+  table { border-collapse: collapse; width: 100%; font-size: 21px; margin-top: 8px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid #e6e6ea; }
+  th { color:#5a5a63; font-size: 15px; text-transform: uppercase; letter-spacing:.06em; }
+  td.k { font-weight: 700; }
+  .hl { color:#ff3621; font-weight:800; }
+  .flow { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 20px;
+          background:#f6f6f8; border:1px solid #e6e6ea; border-radius:12px; padding:26px 30px; line-height:1.7; white-space:pre; }
+  ul { margin: 10px 0 0 26px; } li { font-size: 22px; line-height: 1.5; margin: 8px 0; }
+  .two { display:flex; gap:48px; } .two > div { flex:1; }
+  .card { background:#f6f6f8; border:1px solid #e6e6ea; border-radius:14px; padding:24px 28px; }
+  .card h3 { color:#ff3621; font-size:22px; margin-bottom:10px; }
+  .pagenum { position:absolute; bottom:28px; right:40px; color:#b0b0b8; font-size:14px; }
+  .mono { font-family: ui-monospace, Menlo, monospace; }
+</style></head>
+<body>
+
+<section class="slide cover">
+  <div class="kicker">Databricks · Data Intelligence Platform</div>
+  <h1>Centro de Inteligencia D&amp;N</h1>
+  <p class="lead" style="font-size:30px;margin-top:8px;">De la auditoría de anaquel a la acción, <b>el mismo día</b>.</p>
+  <p class="lead" style="margin-top:28px;max-width:1060px;">Convertir cada visita en una decisión accionable en <span class="hl">minutos</span> —no semanas— para recuperar ventas perdidas por quiebre de stock y mala ejecución en el punto de venta.</p>
+  <p class="note" style="color:#c9c9cf;">Datos 100% sintéticos para la demo. "Nestlé" y "Dichter &amp; Neira" son contexto narrativo; ningún dato proviene de un sistema real.</p>
+</section>
+
+<section class="slide">
+  <div class="kicker">El problema</div>
+  <h2>El dato existe; la acción llega tarde</h2>
+  <p class="lead">El ciclo <b>auditar → reportar → accionar</b> tarda semanas. Para entonces la venta ya se perdió. Medido en la propia red:</p>
+  <table>
+    <tr><th>Señal</th><th>Hoy</th></tr>
+    <tr><td class="k">Tiendas / países / SKUs del cliente</td><td>140 / 10 / 57</td></tr>
+    <tr><td class="k">Disponibilidad en anaquel (OSA)</td><td class="hl">91.8 %</td></tr>
+    <tr><td class="k">Tasa de quiebre</td><td class="hl">8.2 %</td></tr>
+    <tr><td class="k">Ejecución perfecta</td><td class="hl">78.3 %</td></tr>
+  </table>
+  <p class="lead" style="margin-top:26px;">Cada punto de quiebre es venta que no ocurre y share que se cede a la competencia.</p>
+  <div class="pagenum">2</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">El outcome</div>
+  <h2>Un journey, una plataforma</h2>
+  <div class="flow">Auditoría cruda  →  Lakeflow  →  Unity Catalog  →  Lakebase        →  App de negocio
+(foto de anaquel)   (ingesta)     (gobierno)         (copiloto PDV)       (una pantalla)
+                                       │
+                                       ├─ ML: predice dónde se va a quebrar
+                                       ├─ Gen AI: 4 agentes proponen la acción
+                                       └─ Genie: pregúntale en español</div>
+  <p class="lead" style="margin-top:30px;">El mercaderista recibe la sugerencia <b>durante la visita</b> (lectura por clave en ~1 ms desde Lakebase); el gerente ve el tablero y los agentes ya priorizaron qué atacar.</p>
+  <div class="pagenum">3</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Impacto</div>
+  <h2>En los KPIs del comprador</h2>
+  <table>
+    <tr><th>KPI</th><th>Hoy</th><th>Con el Centro</th><th>Palanca</th></tr>
+    <tr><td class="k">Disponibilidad (OSA)</td><td>91.8 %</td><td class="hl">96 % meta</td><td>ML prioriza 34 combinaciones en riesgo ALTO</td></tr>
+    <tr><td class="k">Ejecución perfecta</td><td>78.3 %</td><td class="hl">88 %</td><td>Agente de pulso → visita correctiva dirigida</td></tr>
+    <tr><td class="k">Tiempo a la acción</td><td>semanas</td><td class="hl">minutos</td><td>Agentes + copiloto en tiempo de visita</td></tr>
+    <tr><td class="k">Productividad de visita</td><td>ruta plana</td><td class="hl">ruta por riesgo</td><td>Perfil de PDV servido por Lakebase</td></tr>
+    <tr><td class="k">Share of shelf</td><td>27–30 %</td><td class="hl">+2–3 pts</td><td>Agentes de precio/promo y abastecimiento</td></tr>
+  </table>
+  <div class="pagenum">4</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Modelo de valor</div>
+  <h2>Venta recuperable (ilustrativo)</h2>
+  <p class="big">Ventas perdidas por quiebre ≈ Ventas_red × <b>8.2 %</b> &nbsp;·&nbsp; recuperable ≈ <b>50 %</b></p>
+  <table style="margin-top:22px;max-width:720px;">
+    <tr><th>Ventas anuales del cliente en la red</th><th>Recuperable / año</th></tr>
+    <tr><td class="k">US$ 50 M</td><td class="hl">~US$ 2.0 M</td></tr>
+    <tr><td class="k">US$ 100 M</td><td class="hl">~US$ 4.1 M</td></tr>
+    <tr><td class="k">US$ 250 M</td><td class="hl">~US$ 10.3 M</td></tr>
+  </table>
+  <p class="lead" style="margin-top:24px;">Más el ahorro de llevar el insight de semanas a minutos y la mayor productividad del equipo de campo.</p>
+  <p class="note">Cifras ilustrativas sobre datos sintéticos; supuestos explícitos.</p>
+  <div class="pagenum">5</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Para quién</div>
+  <h2>Patrocinador y dueño de dominio</h2>
+  <div class="two">
+    <div class="card">
+      <h3>Patrocinador ejecutivo</h3>
+      <p style="font-size:18px;color:#5a5a63;margin-bottom:8px;">VP Retail Execution (CPG) · Dirección General D&amp;N</p>
+      <ul>
+        <li>Recupera venta hoy perdida por quiebre y protege el share.</li>
+        <li>De "reporte" a <b>plataforma de acción</b>: diferencia el servicio.</li>
+        <li>Un tablero gobernado, costo bajo control (serverless + CU_1).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Dueño de dominio</h3>
+      <p style="font-size:18px;color:#5a5a63;margin-bottom:8px;">Trade Marketing · Field Ops · Category Manager</p>
+      <ul>
+        <li>Lista de acción priorizada por riesgo, no 140 tiendas por igual.</li>
+        <li>El mercaderista sabe qué hacer <b>en la tienda</b>.</li>
+        <li>Pregunta en lenguaje natural (Genie), sin depender de analítica.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pagenum">6</div>
+</section>
+
+<section class="slide">
+  <div class="kicker">Prueba de que corre</div>
+  <h2>No es un mockup</h2>
+  <ul>
+    <li><b>Lakeflow:</b> pipeline COMPLETED — bronze 2 700 → silver 2 700 → gold 691, con controles de calidad.</li>
+    <li><b>Unity Catalog:</b> PK/FK (RELY), comentarios, tags (<span class="mono">dato=sintetico</span>), GRANTs.</li>
+    <li><b>Lakebase:</b> 140 perfiles, lectura por clave p50 <span class="hl">1.22 ms</span>.</li>
+    <li><b>ML:</b> modelo <span class="mono">@campeon</span> en UC, MAE 0.0551 (−19 % vs baseline), 553 predicciones.</li>
+    <li><b>Gen AI:</b> 4 agentes success con recomendaciones reales y acción tipada.</li>
+    <li><b>Genie:</b> 3 preguntas en español → SQL correcto → cifras.</li>
+    <li><b>App:</b> 33/33 rutas 200, Genie live, Lakebase conectado.</li>
+  </ul>
+  <p class="lead" style="margin-top:22px;">Evidencia como texto en <span class="mono">evidence/00_INDEX.md</span>.</p>
+  <p class="note mono">https://dn-centro-inteligencia-7474652595969633.aws.databricksapps.com</p>
+  <div class="pagenum">7</div>
+</section>
+
+<section class="slide cover" style="background:linear-gradient(135deg,#0b0b0f 0%,#13243a 60%,#ff3621 170%);">
+  <div class="kicker">Próximos pasos</div>
+  <h2 style="color:#fff;">De la demo al piloto</h2>
+  <ul style="color:#f0f0f2;">
+    <li>Conectar el feed real de auditorías por la misma ingesta de Lakeflow.</li>
+    <li>Sincronizar la capa gold a Lakebase como synced table (serving sin desfase).</li>
+    <li>Pilotar en un país y medir OSA antes/después a 60 días.</li>
+  </ul>
+  <p class="note" style="color:#c9c9cf;">Centro de Inteligencia D&amp;N · Databricks Data Intelligence Platform</p>
+</section>
+
+</body></html>

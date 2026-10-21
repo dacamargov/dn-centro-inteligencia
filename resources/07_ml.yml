@@ -1,0 +1,30 @@
+# =============================================================================
+# ML — modelo de riesgo de quiebre de stock
+# =============================================================================
+# Un job manual (sin agenda) que entrena el modelo, lo registra en el Model
+# Registry de Unity Catalog y hace inferencia batch sobre toda la red escribiendo
+# `predicciones_riesgo`. El nombre NO lleva "datagen" ni "agent" a propósito: así
+# el botón "Iniciar demo" del app no lo dispara con el resto de la operación.
+# Se corre a demanda:  databricks bundle run entrenar_riesgo -t demo
+
+resources:
+  jobs:
+    entrenar_riesgo:
+      name: "${var.job_prefix} ml — entrenar riesgo de quiebre"
+      description: >-
+        Entrena un modelo de riesgo de quiebre (GradientBoosting) sobre el
+        histórico de visitas, lo registra en Unity Catalog con alias @campeon y
+        hace inferencia batch a `predicciones_riesgo`. MLflow + UC Model Registry.
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: entrenar
+          notebook_task:
+            notebook_path: ../src/ml/entrenar_riesgo_quiebre.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+          environment_key: default

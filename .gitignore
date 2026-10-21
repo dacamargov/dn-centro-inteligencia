@@ -29,6 +29,9 @@ src/app/app.yaml
 dashboards/.dashboard_id*
 scripts/.genie_id*
 
+# Helper local de esta sesión (ids del deploy, sin secretos). No es estado del repo.
+.dn_env
+
 # OS / IDE
 .DS_Store
 .idea/

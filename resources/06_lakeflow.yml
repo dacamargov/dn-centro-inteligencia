@@ -1,0 +1,62 @@
+# =============================================================================
+# Lakeflow — ingesta declarativa del dato crudo de auditoría
+# =============================================================================
+# El origen del journey: StoreConnect AI aterriza JSON crudo en un Volume de UC
+# y un Lakeflow Declarative Pipeline lo ingiere con Auto Loader a través de
+# bronze → silver (con expectativas de calidad) → gold. La capa gold vive en el
+# MISMO esquema de Unity Catalog que consume el resto de la demo, así que la
+# ingesta queda integrada al journey y no como un silo aparte.
+#
+# El job `ingesta_auditorias` hace las dos mitades en orden: primero aterriza un
+# lote de dato crudo, después corre el pipeline que lo procesa. Nace PAUSADO; lo
+# enciende `./encender.sh` o el botón de la demo (su nombre lleva "datagen" para
+# que el app lo reconozca como fuente de datos).
+
+resources:
+  pipelines:
+    auditorias:
+      name: "${var.job_prefix} · Lakeflow auditorías (bronze→silver→gold)"
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      channel: CURRENT
+      development: true
+      photon: true
+      libraries:
+        - notebook:
+            path: ../src/lakeflow/pipeline_auditorias.py
+      configuration:
+        dn.catalog: ${var.catalog}
+        dn.schema: ${var.schema}
+
+  jobs:
+    ingesta_auditorias:
+      name: "${var.job_prefix} datagen — ingesta Lakeflow"
+      description: >-
+        Aterriza un lote de auditorías crudas en el Volume y dispara el pipeline
+        declarativo que las ingiere (bronze→silver→gold). Es el origen gobernado
+        del journey: de archivo crudo a KPIs de ejecución en Unity Catalog.
+      schedule:
+        quartz_cron_expression: "0 */10 * * * ?"
+        timezone_id: America/Panama
+        pause_status: PAUSED
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: aterrizar_crudo
+          notebook_task:
+            notebook_path: ../src/lakeflow/00_generar_crudo.py
+            base_parameters:
+              catalog: ${var.catalog}
+              schema: ${var.schema}
+              n_archivos: "6"
+              por_archivo: "450"
+          environment_key: default
+        - task_key: procesar_pipeline
+          depends_on:
+            - task_key: aterrizar_crudo
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.auditorias.id}

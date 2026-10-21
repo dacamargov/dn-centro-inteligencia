@@ -38,3 +38,21 @@ resources:
               app_name: ${var.app_name}
               ddl_path: ${workspace.file_path}/src/esquema/lakebase_schema.sql
           environment_key: default
+
+    # Mide el camino caliente (lectura por clave) y exporta la evidencia como JSON.
+    lakebase_evidencia:
+      name: "${var.job_prefix} lakebase — evidencia de serving"
+      max_concurrent_runs: 1
+      environments:
+        - environment_key: default
+          spec:
+            client: "2"
+      tasks:
+        - task_key: medir
+          notebook_task:
+            notebook_path: ../src/lakebase/evidencia_serving.py
+            base_parameters:
+              lakebase_instance: ${var.lakebase_instance}
+              lakebase_db: ${var.lakebase_db}
+              app_name: ${var.app_name}
+          environment_key: default
