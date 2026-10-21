@@ -183,6 +183,27 @@ repositorio. Con eso, les abro a preguntas."**
 > igual. Y la ficha que sirve el copiloto ya se alimenta de la capa gobernada, sin
 > recálculo paralelo."**
 
+**"En producción, con diez países, ¿cuánto tarda el pipeline desde que la foto entra hasta que el gerente ve la predicción?"**
+> **"Primero separemos dos cosas que suelen confundirse. Una es qué tan rápido
+> responde la pantalla cuando el gerente la abre: eso es siempre instantáneo, un
+> milisegundo, porque lee una ficha ya calculada, no espera a ningún procesamiento. La
+> otra es qué tan fresco es el dato detrás de esa ficha, y ahí el recorrido completo
+> —desde que la foto entra hasta que la predicción está disponible— es de minutos, no
+> de horas. La foto sube como archivo en segundos; el sistema la toma apenas llega, de
+> forma incremental, no en una corrida nocturna; el procesamiento con sus controles de
+> calidad y el scoring del modelo corren en ciclos de un par de minutos. Así que una
+> lectura que entra ahora queda accionable en cuestión de minutos. Y lo de los diez
+> países no lo rompe, al contrario: como la ingesta es incremental y el cómputo es
+> serverless, más volumen simplemente escala en paralelo; la latencia por lectura se
+> mantiene plana, no crece porque haya más tiendas. Si el negocio pidiera
+> near-real-time de verdad podemos acercarlo subiendo la frecuencia, pero para
+> ejecución en anaquel los minutos sobran: la ventana de acción es la visita del
+> mercaderista, no los segundos."**
+>
+> _[Si pide el "cómo": Auto Loader ingiere por micro-batch (trigger ajustable), el
+> pipeline y el scoring corren en serverless que autoescala por volumen, y el serving
+> por clave en Lakebase (~1 ms) está desacoplado de todo eso.]_
+
 **"¿Esto lo construyeron a mano o con IA?"**
 > **"Con IA como multiplicador, pero nada se publicó sin verificar contra datos reales,
 > y la parte que toca plata —traslados, precios, espacio en anaquel— es lógica
