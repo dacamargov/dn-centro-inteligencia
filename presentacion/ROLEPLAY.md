@@ -212,6 +212,27 @@ repositorio. Con eso, les abro a preguntas."**
 > igual. Y la ficha que sirve el copiloto ya se alimenta de la capa gobernada, sin
 > recálculo paralelo."**
 
+**"Al escalar a diez países, cada uno con infraestructura distinta, distinta nube, distintas políticas de datos, ¿cómo manejas esa complejidad sin que se me quiebre el modelo en producción?"**
+> **"Justo ahí es donde la arquitectura se gana su lugar. La clave es que la
+> heterogeneidad se absorbe en la entrada, no en el modelo. Cada país puede tener su
+> nube, su proveedor y sus políticas, pero todos aterrizan la auditoría en un mismo
+> contrato de datos —el mismo formato, las mismas columnas—, así que de ahí para arriba
+> el pipeline y el modelo ven exactamente lo mismo sin importar de dónde vino. Eso
+> significa que no mantengo diez sistemas distintos: mantengo uno solo, con una
+> definición que corre igual sobre cualquier nube, porque la plataforma es la misma en
+> AWS, Azure o Google. El gobierno vive en una sola capa: permisos, linaje y políticas
+> por país se administran en un único lugar, y donde una regulación exige que el dato se
+> quede en el país, se queda en el país, pero se sigue gobernando centralmente. Y para
+> que no se quiebre en silencio, el sistema vigila la calidad del dato en cada ingesta y
+> vigila que el modelo no se desvíe; si un país empieza a comportarse distinto, salta la
+> alarma antes de que eso llegue a una recomendación mala. Así, escalar a diez países es
+> sumar fuentes al mismo motor, no reconstruir diez veces."**
+>
+> _[Si pide el "cómo": contrato de datos en la capa bronze, Unity Catalog como gobierno
+> único multi-región (residencia por país, linaje, permisos), pipeline declarativo que
+> corre idéntico en cualquier nube, y expectativas de calidad + monitoreo de drift del
+> modelo como red de seguridad.]_
+
 **"En producción, con diez países, ¿cuánto tarda el pipeline desde que la foto entra hasta que el gerente ve la predicción?"**
 > **"Primero separemos dos cosas que suelen confundirse. Una es qué tan rápido
 > responde la pantalla cuando el gerente la abre: eso es siempre instantáneo, un
