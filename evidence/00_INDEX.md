@@ -21,6 +21,10 @@ app de negocio.
 | 4 | **ML o Gen AI** — hacerlo inteligente | (a) Modelo de ML de riesgo de quiebre en MLflow + UC + inferencia batch; (b) 4 agentes Gen AI con tool-calling | [`02_ml.md`](02_ml.md) · [`05_genai.md`](05_genai.md) |
 | 5 | **Genie Agent** — consultar en lenguaje natural | Sala real NL→SQL sobre el esquema gobernado | [`06_genie.md`](06_genie.md) |
 | 6 | **Databricks App** — exponer a negocio | App vivo, 33/33 rutas 200, cableado a todas las etapas | [`07_app.md`](07_app.md) |
+| + | **Handoff gold → Lakebase** (cierre de deriva) | Perfil servible derivado de gold+modelo (`pdv_perfil_gold`), no recálculo ad-hoc | [`08_gold_serving_handoff.md`](08_gold_serving_handoff.md) |
+
+**Cómo se construyó (build + AI mindset):** relato del workflow con IA, herramientas
+y trade-offs → [`../docs/COMO_SE_CONSTRUYO.md`](../docs/COMO_SE_CONSTRUYO.md).
 
 ## Resumen de resultados verificados
 

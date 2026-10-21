@@ -139,12 +139,38 @@
   <div class="pagenum">7</div>
 </section>
 
+<section class="slide">
+  <div class="kicker">Cómo se construyó</div>
+  <h2>IA como multiplicador</h2>
+  <p class="lead" style="margin-bottom:14px;">Construido en <b>Cursor</b> con un agente de IA (<b>Claude</b>) como pair-programmer, manejando Databricks por el <b>MCP server, el CLI y Asset Bundles</b> (infra-como-código).</p>
+  <div class="two">
+    <div class="card">
+      <h3>Dónde la IA multiplicó</h3>
+      <ul>
+        <li><b>Scaffolding</b> del journey completo desde la intención: minutos, no días.</li>
+        <li><b>Loop de depuración</b> contra el entorno vivo: desplegar, leer el event log, corregir.</li>
+        <li><b>Evidencia como texto</b>: consultó UC, Genie, Lakebase y el app y escribió resultados reales.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Trade-offs deliberados</h3>
+      <ul>
+        <li>La IA escribe; <b>nada se publica sin verificar</b> contra datos en vivo.</li>
+        <li><b>La IA no decide la plata</b>: haversine, umbrales, índice de precio y denominador de SoS son <b>SQL determinista</b>; el LLM solo elige qué candidato escalar.</li>
+        <li>Correcciones reales: streaming→MV, referencia ambigua, <span class="mono">Decimal</span> en MLflow, política de tags UC.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note mono">Detalle: docs/COMO_SE_CONSTRUYO.md</p>
+  <div class="pagenum">8</div>
+</section>
+
 <section class="slide cover" style="background:linear-gradient(135deg,#0b0b0f 0%,#13243a 60%,#ff3621 170%);">
   <div class="kicker">Próximos pasos</div>
   <h2 style="color:#fff;">De la demo al piloto</h2>
   <ul style="color:#f0f0f2;">
     <li>Conectar el feed real de auditorías por la misma ingesta de Lakeflow.</li>
-    <li>Sincronizar la capa gold a Lakebase como synced table (serving sin desfase).</li>
+    <li><b>Ya cerrado:</b> el perfil servible se deriva de la capa gold (<span class="mono">pdv_perfil_gold</span>, con PK + Change Data Feed), sin recálculo paralelo; la synced table continua es un solo comando donde el metastore lo permita.</li>
     <li>Pilotar en un país y medir OSA antes/después a 60 días.</li>
   </ul>
   <p class="note" style="color:#c9c9cf;">Centro de Inteligencia D&amp;N · Databricks Data Intelligence Platform</p>

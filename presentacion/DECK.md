@@ -113,9 +113,39 @@ Toda la evidencia de ejecución está en el repositorio, como texto legible:
 
 ---
 
-## 7 · Próximos pasos
+## 7 · Cómo se construyó — IA como multiplicador
+
+Construido en **Cursor** con un **agente de IA (Claude)** como pair-programmer,
+manejando Databricks por el **MCP server, el CLI y Asset Bundles** (infra-como-código).
+
+**Dónde la IA fue el multiplicador:**
+- **Scaffolding** del journey completo (pipeline DLT, notebook de ML, gobernanza,
+  backend/frontend) desde la intención — minutos, no días.
+- **Loop de depuración contra el entorno vivo:** el agente desplegaba, leía el event
+  log del pipeline y corregía (streaming vs. MV, referencia ambigua, cambio de tipo
+  de dataset, `Decimal` en MLflow, política de tags de UC).
+- **Evidencia como texto:** consultó `information_schema`, Genie, Lakebase y las rutas
+  del app y escribió los resultados reales a `evidence/`.
+
+**Trade-offs deliberados al construir con IA:**
+- **La IA escribe; nada se publica sin verificar** — cada artefacto se validó contra
+  resultados en vivo.
+- **La IA no decide la plata:** la economía (haversine, umbrales, ventana de
+  decaimiento, índice de precio por 100 g/ml, denominador de share of shelf) es **SQL
+  determinista**; el LLM solo elige qué candidato ya calculado escalar.
+
+> Detalle completo en `docs/COMO_SE_CONSTRUYO.md` (incluye las historias de iteración
+> real: cola desbordada → ventana de decaimiento; bug del denominador de SoS; fix de
+> threading del feed en vivo; presupuesto de latencia de Lakebase).
+
+---
+
+## 8 · Próximos pasos
 
 1. Conectar el feed real de auditorías (reemplazar el generador sintético) vía la
    misma ingesta de Lakeflow.
-2. Sincronizar la capa gold a Lakebase como *synced table* (serving sin desfase).
+2. **Ya cerrado:** el perfil servible se deriva de la capa gold (`pdv_perfil_gold`,
+   con PK + Change Data Feed), no de un recálculo paralelo — cero deriva entre
+   entrenamiento y serving. El paso a *synced table* continua gestionada es un solo
+   comando donde el metastore lo permita (ver `evidence/08_gold_serving_handoff.md`).
 3. Pilotar en un país con un equipo de campo y medir OSA antes/después a 60 días.

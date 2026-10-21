@@ -137,83 +137,50 @@ with conectar() as conn:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## 2 · Semilla de perfiles de PDV
+# MAGIC ## 2 · Semilla de perfiles de PDV — desde la capa GOLD
 # MAGIC
-# MAGIC El perfil de cada punto de venta es un agregado lento del histórico de
-# MAGIC visitas: qué categorías fallan más ahí, qué SKUs son foco, cuánto vale la
-# MAGIC categoría en ese formato y qué tan probable es encontrar un quiebre.
+# MAGIC El perfil servible **no** se recalcula ad-hoc: se deriva de la capa gobernada
+# MAGIC `pdv_perfil_gold`, que a su vez sale de la capa gold de Lakeflow
+# MAGIC (`ejecucion_pdv_gold`) + la salida del modelo (`predicciones_riesgo`) + los
+# MAGIC maestros de UC. Así los features de serving y de entrenamiento salen del mismo
+# MAGIC lugar y **no pueden desalinearse**.
 # MAGIC
-# MAGIC En producción esto sería una synced table alimentada desde la capa gold, con
-# MAGIC lo que los mismos features que entrenan el modelo se sirven acá y desaparece
-# MAGIC el desfase entre entrenamiento y serving. Acá se materializa con un UPSERT
-# MAGIC para que la demo no dependa de la sincronización.
+# MAGIC El handoff gold → Lakebase se hace aquí con un UPSERT gobernado. En un
+# MAGIC workspace con permiso de `CREATE CATALOG` sobre el metastore, el mismo
+# MAGIC `pdv_perfil_gold` (ya tiene PK y Change Data Feed) se registra como **synced
+# MAGIC table continua** con un solo comando —ver `docs/LAKEBASE.md`.
 
 # COMMAND ----------
 
+# Construye la capa gold de serving desde el lakehouse gobernado. El SQL vive en
+# src/datos/05_perfil_gold.sql (único origen, revisable) y se lee de ahí: no se
+# duplica la lógica en el notebook.
+def _resolver_sql(rel: str) -> str:
+    ctx = dbutils.notebook.entry_point.getDbutils().notebook().getContext()
+    aqui = os.path.dirname(ctx.notebookPath().get())
+    # El notebook vive en src/lakebase/; el .sql en src/datos/.
+    return f"/Workspace{os.path.dirname(aqui)}/{rel}"
+
+
+perfil_file = _resolver_sql("datos/05_perfil_gold.sql")
+print(f"GOLD serving SQL: {perfil_file}")
+with open(perfil_file, "r", encoding="utf-8") as fh:
+    perfil_sql = fh.read().replace("{cat}", CATALOG).replace("{sch}", SCHEMA)
+
+_lineas = [l for l in perfil_sql.splitlines() if not l.strip().startswith("--")]
+for _stmt in [s.strip() for s in "\n".join(_lineas).split(";") if s.strip()]:
+    spark.sql(_stmt)
+print(f"✅ {FQ}.pdv_perfil_gold construida desde gold + modelo (una fila por PDV)")
+
+# El serving lee EXACTAMENTE esa tabla gold — handoff gold -> Lakebase, sin
+# recálculo paralelo que pueda derivar frente a los features del modelo.
 PERFILES_SQL = f"""
-WITH hist AS (
-  SELECT
-    v.store_id,
-    AVG(CASE WHEN v.es_cliente THEN CAST(v.en_stock AS INT) END) * 100            AS disponibilidad_hist,
-    AVG(CASE WHEN v.es_cliente THEN CAST(v.ejecucion_perfecta AS INT) END) * 100  AS ejecucion_hist,
-    SUM(CASE WHEN v.es_cliente THEN v.facings ELSE 0 END)
-      / NULLIF(SUM(v.facings), 0) * 100                                           AS sos_hist,
-    AVG(CASE WHEN v.es_cliente THEN CAST(NOT v.en_stock AS INT) END)              AS riesgo_quiebre,
-    AVG(CASE WHEN v.es_cliente THEN v.precio_usd END)                             AS ticket_categoria_usd,
-    MAX(v.visit_ts)                                                               AS ultima_visita
-  FROM {FQ}.visitas v
-  GROUP BY v.store_id
-),
--- Las dos categorías donde ese PDV ejecuta peor: son las que el copiloto
--- prioriza cuando el mercaderista no fija una a mano.
-cat_rank AS (
-  SELECT store_id, categoria,
-         ROW_NUMBER() OVER (
-           PARTITION BY store_id
-           ORDER BY AVG(CASE WHEN es_cliente THEN CAST(en_stock AS INT) END) ASC
-         ) AS rn
-  FROM {FQ}.visitas
-  WHERE es_cliente
-  GROUP BY store_id, categoria
-),
-cats AS (
-  SELECT store_id, collect_list(categoria) AS categorias_prioritarias
-  FROM cat_rank WHERE rn <= 2
-  GROUP BY store_id
-),
--- Los SKUs del cliente que más se agotan en ese PDV concreto.
-sku_rank AS (
-  SELECT store_id, sku,
-         ROW_NUMBER() OVER (
-           PARTITION BY store_id
-           ORDER BY SUM(CASE WHEN NOT en_stock THEN 1 ELSE 0 END) DESC
-         ) AS rn
-  FROM {FQ}.visitas
-  WHERE es_cliente
-  GROUP BY store_id, sku
-),
-skus AS (
-  SELECT store_id, collect_list(sku) AS skus_foco
-  FROM sku_rank WHERE rn <= 5
-  GROUP BY store_id
-)
-SELECT
-  t.store_id, t.nombre, t.canal, t.cadena, t.formato, t.ciudad, t.country_code,
-  p.pais, t.mercaderista, t.visitas_mes_meta,
-  COALESCE(c.categorias_prioritarias, array())  AS categorias_prioritarias,
-  COALESCE(s.skus_foco, array())                AS skus_foco,
-  ROUND(COALESCE(h.disponibilidad_hist, 0), 2)  AS disponibilidad_hist,
-  ROUND(COALESCE(h.ejecucion_hist, 0), 2)       AS ejecucion_hist,
-  ROUND(COALESCE(h.sos_hist, 0), 2)             AS sos_hist,
-  ROUND(COALESCE(h.riesgo_quiebre, 0), 3)       AS riesgo_quiebre,
-  ROUND(COALESCE(h.ticket_categoria_usd, 0), 2) AS ticket_categoria_usd,
-  h.ultima_visita
-FROM {FQ}.tiendas t
-LEFT JOIN {FQ}.paises p ON p.country_code = t.country_code
-LEFT JOIN hist h ON h.store_id = t.store_id
-LEFT JOIN cats c ON c.store_id = t.store_id
-LEFT JOIN skus s ON s.store_id = t.store_id
-ORDER BY t.store_id
+  SELECT store_id, nombre, canal, cadena, formato, ciudad, country_code, pais,
+         mercaderista, visitas_mes_meta, categorias_prioritarias, skus_foco,
+         disponibilidad_hist, ejecucion_hist, sos_hist, riesgo_quiebre,
+         ticket_categoria_usd, ultima_visita
+  FROM {FQ}.pdv_perfil_gold
+  ORDER BY store_id
 """
 
 filas = [tuple(r) for r in spark.sql(PERFILES_SQL).collect()]
