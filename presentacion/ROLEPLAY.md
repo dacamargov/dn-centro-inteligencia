@@ -28,21 +28,27 @@ Responde a la altura de quien pregunta; cierra siempre con impacto de negocio.
 
 ---
 
-## Demo — tell-show-tell, una línea por etapa _(3–4 min, Slide 3)_
+## Demo — en lenguaje de negocio _(3–4 min, Slide 3)_
 
-> _[Di qué muestras, muéstralo, aterriza el "y esto significa…". No expliques plomería.]_
+> _[Habla de lo que el gerente VE y GANA. Cero jerga técnica. Un gerente de tienda
+> no sabe —ni le importa— qué es Lakeflow o un catálogo; le importa la venta.
+> Los nombres técnicos solo salen si el operador pregunta "¿cómo?" (abajo).]_
 
-1. **Lakeflow** — "El dato crudo de la auditoría entra solo y se valida. → El número
-   es confiable."
-2. **Unity Catalog** — "Todo gobernado, con dato marcado como sintético. → Un solo
-   control, sin silos."
-3. **Lakebase** — "El perfil de la tienda sale en ~1 ms. → La sugerencia llega
-   **durante la visita**."
-4. **ML + Gen AI** — "El modelo dice **dónde** se va a quebrar; los agentes dicen
-   **qué hacer**. → El equipo ataca primero las **34 tiendas** críticas, no 140 por igual."
-5. **Genie** — "Pregunto en español '¿las 5 peores tiendas?' y responde con SQL. →
-   Autoservicio, sin pasar por el área de datos."
-6. **App** — "Todo en una pantalla, vivo. → Una sola superficie para operar."
+1. "La **foto de la auditoría entra sola y se limpia**: lo que la cámara leyó mal se
+   marca aparte, así el número en el que confías es real."
+2. "Cada tienda tiene su **ficha**, y aparece **al instante** cuando el mercaderista
+   la abre en la visita."
+3. "El sistema **predice dónde se va a quebrar el producto antes de que pase**, y le
+   dice al mercaderista **exactamente qué corregir en ese anaquel**."
+4. "Así el equipo ataca primero las **34 tiendas críticas**, no las 140 por igual."
+5. "Y si quieres algo que no está en la pantalla, **le preguntas en español** —'¿cuáles
+   son mis 5 peores tiendas?'— y te responde al momento, sin pedirle nada a sistemas."
+6. "Todo esto en **una sola pantalla**, en vivo."
+
+> **Traducción técnica — SOLO si el operador pregunta "¿cómo está hecho?"**
+> (1) Lakeflow con controles de calidad · (2+6) Unity Catalog gobierna todo y el app
+> lo expone · (3) perfil servido desde Lakebase en ~1 ms · (3-4) modelo de ML +
+> agentes de Gen AI · (5) Genie traduce la pregunta a SQL. _[Ver `evidence/`.]_
 
 ---
 
