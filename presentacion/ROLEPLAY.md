@@ -254,6 +254,31 @@ repositorio. Con eso, les abro a preguntas."**
 > pipeline y el scoring corren en serverless que autoescala por volumen, y el serving
 > por clave en Lakebase (~1 ms) está desacoplado de todo eso.]_
 
+**"Si algo se rompe, alguien tiene que estar disponible. ¿Quién es ese alguien, cuál es el modelo de soporte, y qué pasa si necesito soporte a las tres de la mañana en un país donde ustedes no tienen presencia?"**
+> **"Es una preocupación válida, y la respuesta tiene dos capas. La primera: buena parte
+> de 'que algo se rompa' ni siquiera depende de que haya alguien despierto. La
+> plataforma es gestionada, sin servidores que administrar, con el respaldo y el acuerdo
+> de nivel de servicio del proveedor de nube, que ya opera soporte veinticuatro-siete a
+> nivel mundial; si falla algo de la infraestructura, eso lo cubre el proveedor, no mi
+> equipo a las tres de la mañana. La segunda capa es el diseño: el sistema está hecho
+> para degradar con elegancia. La pantalla que ve el gerente lee predicciones ya
+> calculadas, así que aunque la ingesta tenga un tropiezo de madrugada, nadie se queda a
+> oscuras: sigue viendo la última lectura buena mientras el proceso se recupera solo,
+> porque reintenta los lotes fallidos sin intervención. Y sobre nuestro soporte: es por
+> niveles y sigue al sol. El monitoreo automático detecta y alerta en el momento; el
+> equipo regional atiende en horario; y como cubrimos varias regiones, las tres de la
+> mañana en un país son horario de oficina en otro. Para eso no necesito tener gente
+> físicamente en ese país: la plataforma se opera y se vigila de forma central, en la
+> nube. Así que el modelo no depende de héroes despiertos: depende de infraestructura
+> gestionada, monitoreo que se anticipa, procedimientos documentados y cobertura que
+> sigue al sol."**
+>
+> _[Si pide el "cómo": SLA del proveedor de nube + Databricks sobre infra serverless;
+> serving desacoplado (la última predicción buena en Lakebase sigue disponible aunque
+> falle la ingesta); reintento automático de micro-batches; soporte en niveles (L1
+> monitoreo/alertas automáticas, L2 on-call regional, L3 follow-the-sun) con runbooks y
+> linaje de Unity Catalog para diagnóstico rápido.]_
+
 **"¿Esto lo construyeron a mano o con IA?"**
 > **"Con IA como multiplicador, pero nada se publicó sin verificar contra datos reales,
 > y la parte que toca plata —traslados, precios, espacio en anaquel— es lógica
